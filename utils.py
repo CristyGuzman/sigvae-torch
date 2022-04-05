@@ -1,13 +1,17 @@
 import pickle as pkl
 import sys
 import networkx as nx
+from networkx.readwrite import json_graph
 import numpy as np
 import scipy.sparse as sp
 import torch
+import json
+from tqdm import tqdm
 from sklearn.metrics import roc_auc_score, average_precision_score
 
 
 def load_data(dataset):
+    print('Loading data')
     # load the data: x, tx, allx, graph
     names = ['x', 'tx', 'allx', 'graph']
     objects = []
@@ -52,6 +56,15 @@ def load_data(dataset):
     adj = nx.adjacency_matrix(nx.from_dict_of_lists(graph))
 
     return adj, features
+
+def json_to_sparse_matrix(file_dir):
+    with open(file_dir, 'r') as f:
+        json_dict = json.loads(json.load(f))
+        print(f'Loading {len(json_dict)} items from file')
+        graphs = [nx.to_scipy_sparse_matrix(json_graph.adjacency_graph(json_dict[key])) for key, _ in tqdm(json_dict.items())]
+        return graphs
+
+
 
 
 def parse_index_file(filename):
