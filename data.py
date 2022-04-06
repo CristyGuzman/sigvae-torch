@@ -47,7 +47,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     data_list = json_to_sparse_matrix(args.file_dir)
     adj, features = load_data('cora')
-    loader = DataLoader(data_list, batch_size=3)
+    loader = DataLoader(data_list, batch_size=4)
     for i, batch in enumerate(loader):
 
         print(i, batch.num_graphs)
