@@ -1,5 +1,5 @@
 import os
-
+from torch_geometric.utils import from_scipy_sparse_matrix
 from torch_geometric.loader import DataLoader
 import networkx as nx
 from networkx.readwrite import json_graph
@@ -17,9 +17,10 @@ def json_to_sparse_matrix(file_dir):
             json_dict = json.loads(json.load(f))
             print(f'Loading {len(json_dict)} items from file')
             for key, _ in json_dict.items():
-                adj = nx.to_scipy_sparse_matrix(json_graph.adjacency_graph(json_dict[key]))
-                features = torch.ones([1, adj.shape[0], 1])
-                adj_features_list.append((adj, features))
+                adj = from_scipy_sparse_matrix(nx.to_scipy_sparse_matrix(json_graph.adjacency_graph(json_dict[key])))
+                #features = torch.ones([1, adj.shape[0], 1])
+                #adj_features_list.append((adj, features))
+                adj_features_list.append(adj)
     return adj_features_list
 
 
