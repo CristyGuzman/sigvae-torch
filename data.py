@@ -20,18 +20,18 @@ def json_to_sparse_matrix(file_dir):
             print(f'Loading {len(json_dict)} items from file')
             for key, _ in json_dict.items():
                 sparse_adj = nx.to_scipy_sparse_matrix(json_graph.adjacency_graph(json_dict[key]))
-                adj_norm = preprocess_graph(sparse_adj)
-                adj_label = sparse_adj + sp.eye(sparse_adj.shape[0])
-                adj_label = torch.FloatTensor(adj_label.toarray())
-                pos_weight = torch.tensor([float(sparse_adj.shape[0] * sparse_adj.shape[0] - sparse_adj.sum()) / sparse_adj.sum()])
-                norm = sparse_adj.shape[0] * sparse_adj.shape[0] / float((sparse_adj.shape[0] * sparse_adj.shape[0] - sparse_adj.sum()) * 2)
+                #adj_norm = preprocess_graph(sparse_adj)
+                #adj_label = sparse_adj + sp.eye(sparse_adj.shape[0])
+                #adj_label = torch.FloatTensor(adj_label.toarray())
+                #pos_weight = torch.tensor([float(sparse_adj.shape[0] * sparse_adj.shape[0] - sparse_adj.sum()) / sparse_adj.sum()])
+                #norm = sparse_adj.shape[0] * sparse_adj.shape[0] / float((sparse_adj.shape[0] * sparse_adj.shape[0] - sparse_adj.sum()) * 2)
                 x = torch.ones([sparse_adj.shape[0], 1])
                 edge_index, edge_attrs = from_scipy_sparse_matrix(sparse_adj)
                 data = Data(x=x, edge_index=edge_index)
-                data.adj_norm = adj_norm
-                data.adj_label = adj_label
-                data.pos_weight = pos_weight
-                data.norm = norm
+                #data.adj_norm = adj_norm
+                #data.adj_label = adj_label
+                #data.pos_weight = pos_weight
+                #data.norm = norm
                 adj_features_list.append(data)
 
     return adj_features_list
