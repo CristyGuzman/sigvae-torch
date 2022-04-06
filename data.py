@@ -42,6 +42,14 @@ def json_to_sparse_matrix(file_dir):
 
 
 if __name__ == '__main__':
+    from torch_geometric.datasets import TUDataset
+    from torch_geometric.loader import DataLoader
+
+    dataset = TUDataset(root='/tmp/ENZYMES', name='ENZYMES', use_node_attr=True)
+    loader = DataLoader(dataset, batch_size=32, shuffle=True)
+
+
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--file_dir")
     args = parser.parse_args()
