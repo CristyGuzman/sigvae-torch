@@ -20,7 +20,7 @@ def json_to_sparse_matrix(file_dir):
                 adj = nx.to_scipy_sparse_matrix(json_graph.adjacency_graph(json_dict[key]))
                 features = torch.ones([1, adj.shape[0], 1])
                 adj_features_list.append((adj, features))
-        return adj_features_list
+    return adj_features_list
 
 
 if __name__ == '__main__':
