@@ -11,6 +11,15 @@ import scipy.sparse as sp
 import torch
 from utils import load_data, preprocess_graph
 
+from torch_geometric.data import Data
+from torch_geometric.loader import DataLoader
+
+class MyData(Data):
+ def __cat_dim__(self, key, value, *args, **kwargs):
+     if (key == 'pos_weight') or (key == 'norm'):
+         return None
+     else:
+         return super().__cat_dim__(key, value, *args, **kwargs)
 
 def json_to_sparse_matrix(file_dir):
     adj_features_list = []
@@ -31,9 +40,9 @@ def json_to_sparse_matrix(file_dir):
                 norm = torch.unsqueeze(torch.tensor(norm), dim=0)
                 x = torch.ones([sparse_adj.shape[0], 1])
                 edge_index, edge_attrs = from_scipy_sparse_matrix(sparse_adj)
-                data = Data(x=x, edge_index=edge_index)
-                data.adj_norm = adj_norm
-                data.adj_label = adj_label
+                data = MyData(x=x, edge_index=edge_index)
+                #data.adj_norm = adj_norm
+                #data.adj_label = adj_label
                 data.pos_weight = pos_weight
                 data.norm = norm
                 adj_features_list.append(data)
@@ -45,8 +54,8 @@ if __name__ == '__main__':
     from torch_geometric.datasets import TUDataset
     from torch_geometric.loader import DataLoader
 
-    dataset = TUDataset(root='/tmp/ENZYMES', name='ENZYMES', use_node_attr=True)
-    loader = DataLoader(dataset, batch_size=32, shuffle=True)
+    #dataset = TUDataset(root='/tmp/ENZYMES', name='ENZYMES', use_node_attr=True)
+    #loader = DataLoader(dataset, batch_size=32, shuffle=True)
 
 
 
@@ -54,8 +63,8 @@ if __name__ == '__main__':
     parser.add_argument("--file_dir")
     args = parser.parse_args()
     data_list = json_to_sparse_matrix(args.file_dir)
-    adj, features = load_data('cora')
     loader = DataLoader(data_list, batch_size=4)
+    adj, features = load_data('cora')
     for i, batch in enumerate(loader):
 
         print(i, batch.num_graphs)
