@@ -16,7 +16,7 @@ from torch_geometric.loader import DataLoader
 
 class MyData(Data):
  def __cat_dim__(self, key, value, *args, **kwargs):
-     if (key == 'pos_weight') or (key == 'norm'):
+     if (key == 'pos_weight') or (key == 'norm') or (key == 'adj_norm') or (key == 'adj_label'):
          return None
      else:
          return super().__cat_dim__(key, value, *args, **kwargs)
@@ -41,8 +41,8 @@ def json_to_sparse_matrix(file_dir):
                 x = torch.ones([sparse_adj.shape[0], 1])
                 edge_index, edge_attrs = from_scipy_sparse_matrix(sparse_adj)
                 data = MyData(x=x, edge_index=edge_index)
-                #data.adj_norm = adj_norm
-                #data.adj_label = adj_label
+                data.adj_norm = adj_norm
+                data.adj_label = adj_label
                 data.pos_weight = pos_weight
                 data.norm = norm
                 adj_features_list.append(data)
