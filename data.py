@@ -11,7 +11,7 @@ import scipy.sparse as sp
 import torch
 from utils import load_data, preprocess_graph
 from torch_geometric.utils import train_test_split_edges
-
+import torch_geometric.transforms as T
 from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
 
@@ -102,6 +102,14 @@ if __name__ == '__main__':
     parser.add_argument("--file_dir")
     args = parser.parse_args()
     data_list = json_to_sparse_matrix(args.file_dir)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    transform = T.Compose([
+        T.NormalizeFeatures(),
+        T.ToDevice(device),
+        T.RandomLinkSplit(num_val=0.05, num_test=0.1, is_undirected=True,
+                          split_labels=True, add_negative_train_samples=False),
+    ])
+    dataset = MyOwnDataset(root='home/csolis/pytorch_datasets', transform=transform)
     loader = DataLoader(data_list, batch_size=4)
     adj, features = load_data('cora')
     for i, batch in enumerate(loader):
