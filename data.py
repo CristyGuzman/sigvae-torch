@@ -10,6 +10,7 @@ import argparse
 import scipy.sparse as sp
 import torch
 from utils import load_data, preprocess_graph
+from torch_geometric.utils import train_test_split_edges
 
 from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
@@ -66,5 +67,5 @@ if __name__ == '__main__':
     loader = DataLoader(data_list, batch_size=4)
     adj, features = load_data('cora')
     for i, batch in enumerate(loader):
-
+        batch = train_test_split_edges(batch)
         print(i, batch.num_graphs)
