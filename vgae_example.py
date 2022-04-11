@@ -2,10 +2,13 @@ import argparse
 import os.path as osp
 
 import torch
-
+from utils import load_data, preprocess_graph
+from data import json_to_sparse_matrix
 import torch_geometric.transforms as T
+from torch_geometric.loader import DataLoader
 from torch_geometric.datasets import Planetoid
 from torch_geometric.nn import GAE, VGAE, GCNConv
+from torch_geometric.utils import train_test_split_edges
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--variational', action='store_true')
@@ -24,7 +27,7 @@ transform = T.Compose([
 ])
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', 'Planetoid')
 dataset = Planetoid(path, args.dataset, transform=transform)
-train_data, val_data, test_data = dataset[0]
+train_data, val_data, test_data = dataset[0] #Data(x=[2708, 1433], edge_index=[2, 10556], y=[2708], train_mask=[2708], val_mask=[2708], test_mask=[2708], edge_attr=[10556, 1])
 
 
 class GCNEncoder(torch.nn.Module):
@@ -68,6 +71,16 @@ class VariationalLinearEncoder(torch.nn.Module):
     def forward(self, x, edge_index):
         return self.conv_mu(x, edge_index), self.conv_logstd(x, edge_index)
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--file_dir")
+    args = parser.parse_args()
+    data_list = json_to_sparse_matrix(args.file_dir)
+    loader = DataLoader(data_list, batch_size=4)
+    adj, features = load_data('cora')
+    for i, batch in enumerate(loader):
+        batch = train_test_split_edges(batch)
+        print(i, batch.num_graphs)
 
 in_channels, out_channels = dataset.num_features, 16
 
