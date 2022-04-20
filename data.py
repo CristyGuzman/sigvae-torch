@@ -45,8 +45,8 @@ def json_to_sparse_matrix(file_dir):
                 data = MyData(x=x, edge_index=edge_index)
                 #data.adj_norm = adj_norm
                 #data.adj_label = adj_label
-                data.pos_weight = pos_weight
-                data.norm = norm
+                #data.pos_weight = pos_weight
+                #data.norm = norm
                 adj_features_list.append(data)
 
     return adj_features_list
