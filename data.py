@@ -88,9 +88,9 @@ class MyOwnDataset(InMemoryDataset):
 
         data, slices = self.collate(data_list)
         print(self.processed_paths)
-        for i, data in enumerate(data_list):
-            torch.save(data, os.path.join(self.processed_dir, f'data_{i}.pt'))
-        #torch.save((data, slices), self.processed_paths[0])
+        #for i, data in enumerate(data_list):
+        #    torch.save(data, os.path.join(self.processed_dir, f'data_{i}.pt'))
+        torch.save((data, slices), self.processed_paths[0])
 
 
 
@@ -113,8 +113,8 @@ if __name__ == '__main__':
         T.RandomLinkSplit(num_val=0.05, num_test=0.1, is_undirected=True,
                           split_labels=True, add_negative_train_samples=False),
     ])
-    #dataset = MyOwnDataset(root='/home/csolis/data/pyg_datasets/', transform=transform)
-    dataset = MyOwnDataset(root='/home/csolis/data/pyg_datasets/')
+    dataset = MyOwnDataset(root='/home/csolis/data/pyg_datasets/', transform=transform)
+    #dataset = MyOwnDataset(root='/home/csolis/data/pyg_datasets/')
     data_list = json_to_sparse_matrix(args.file_dir)
 
     loader = DataLoader(data_list, batch_size=4)
