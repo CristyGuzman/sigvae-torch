@@ -1,7 +1,8 @@
 import argparse
 import os.path as osp
-
+from data import MyOwnDataset
 import torch
+from tqdm import tqdm
 from utils import load_data, preprocess_graph
 from data import json_to_sparse_matrix
 import torch_geometric.transforms as T
@@ -9,25 +10,6 @@ from torch_geometric.loader import DataLoader
 from torch_geometric.datasets import Planetoid
 from torch_geometric.nn import GAE, VGAE, GCNConv
 from torch_geometric.utils import train_test_split_edges
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--variational', action='store_true')
-parser.add_argument('--linear', action='store_true')
-parser.add_argument('--dataset', type=str, default='Cora',
-                    choices=['Cora', 'CiteSeer', 'PubMed'])
-parser.add_argument('--epochs', type=int, default=400)
-args = parser.parse_args()
-
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-transform = T.Compose([
-    T.NormalizeFeatures(),
-    T.ToDevice(device),
-    T.RandomLinkSplit(num_val=0.05, num_test=0.1, is_undirected=True,
-                      split_labels=True, add_negative_train_samples=False),
-])
-path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', 'Planetoid')
-dataset = Planetoid(path, args.dataset, transform=transform)
-train_data, val_data, test_data = dataset[0] #Data(x=[2708, 1433], edge_index=[2, 10556], y=[2708], train_mask=[2708], val_mask=[2708], test_mask=[2708], edge_attr=[10556, 1])
 
 
 class GCNEncoder(torch.nn.Module):
@@ -71,43 +53,15 @@ class VariationalLinearEncoder(torch.nn.Module):
     def forward(self, x, edge_index):
         return self.conv_mu(x, edge_index), self.conv_logstd(x, edge_index)
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file_dir")
-    args = parser.parse_args()
-    data_list = json_to_sparse_matrix(args.file_dir)
-    loader = DataLoader(data_list, batch_size=4)
-    adj, features = load_data('cora')
-    for i, batch in enumerate(loader):
-        batch = train_test_split_edges(batch)
-        print(i, batch.num_graphs)
-
-in_channels, out_channels = dataset.num_features, 16
-
-if not args.variational and not args.linear:
-    model = GAE(GCNEncoder(in_channels, out_channels))
-elif not args.variational and args.linear:
-    model = GAE(LinearEncoder(in_channels, out_channels))
-elif args.variational and not args.linear:
-    model = VGAE(VariationalGCNEncoder(in_channels, out_channels))
-elif args.variational and args.linear:
-    model = VGAE(VariationalLinearEncoder(in_channels, out_channels))
-
-model = model.to(device)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-
-
 def train():
     model.train()
     optimizer.zero_grad()
     z = model.encode(train_data.x, train_data.edge_index)
     loss = model.recon_loss(z, train_data.pos_edge_label_index)
-    if args.variational:
-        loss = loss + (1 / train_data.num_nodes) * model.kl_loss()
+    loss = loss + (1 / train_data.num_nodes) * model.kl_loss()
     loss.backward()
     optimizer.step()
     return float(loss)
-
 
 @torch.no_grad()
 def test(data):
@@ -116,7 +70,43 @@ def test(data):
     return model.test(z, data.pos_edge_label_index, data.neg_edge_label_index)
 
 
-for epoch in range(1, args.epochs + 1):
-    loss = train()
-    auc, ap = test(test_data)
-    print(f'Epoch: {epoch:03d}, AUC: {auc:.4f}, AP: {ap:.4f}')
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--linear', action='store_true')
+    parser.add_argument('--epochs', type=int, default=400)
+    args = parser.parse_args()
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    transform = T.Compose([
+        T.NormalizeFeatures(),
+        T.ToDevice(device),
+        T.RandomLinkSplit(num_val=0.05, num_test=0.1, is_undirected=True,
+                          split_labels=True, add_negative_train_samples=False),
+    ])
+    dataset = MyOwnDataset(root='/home/csolis/data/pyg_datasets/', transform=transform)
+    dataset[0]
+    loader = DataLoader(dataset, batch_size=3)
+
+    in_channels, out_channels = dataset.num_features, 16
+
+    if not args.linear:
+        model = VGAE(VariationalGCNEncoder(in_channels, out_channels))
+    else:
+        model = VGAE(VariationalLinearEncoder(in_channels, out_channels))
+
+    model = model.to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+
+    for epoch in range(1, args.epochs + 1):
+        for i, data in tqdm(enumerate(loader)):
+            train_data, val_data, test_data = data
+            loss = train()
+            print(f'Epoch: {epoch:03d}')
+            if i % args.validation_steps == 0:
+                auc, ap = test(test_data)
+                print(f'Epoch: {epoch:03d}, AUC: {auc:.4f}, AP: {ap:.4f}')
+
+
+
+
