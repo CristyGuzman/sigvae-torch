@@ -24,7 +24,8 @@ class MyData(Data):
 
 def json_to_sparse_matrix(file_dir):
     adj_features_list = []
-    for file in tqdm(os.listdir(file_dir)):
+    #for file in tqdm(os.listdir(file_dir)):
+    for file in tqdm(file_dir):
         with open(os.path.join(file_dir, file), 'r') as f:
             json_dict = json.loads(json.load(f))
             print(f'Loading {len(json_dict)} items from file')
@@ -76,7 +77,7 @@ class MyOwnDataset(InMemoryDataset):
 
     def process(self):
         # Read data into huge `Data` list.
-        data_list = json_to_sparse_matrix(self.file_dir)
+        data_list = json_to_sparse_matrix(self.raw_paths)
 
         if self.pre_filter is not None:
             data_list = [data for data in data_list if self.pre_filter(data)]
