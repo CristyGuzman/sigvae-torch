@@ -63,11 +63,11 @@ class MyOwnDataset(InMemoryDataset):
 
     @property
     def raw_file_names(self):
-        return ['some_file_1', 'some_file_2', ...]
+        return os.listdir('/home/csolis/data/pyg_datasets/raw')
 
     @property
     def processed_file_names(self):
-        return ['data.pt']
+        return 'not_implemented.pt'
 
     #def download(self):
         # Download to `self.raw_dir`.
@@ -109,7 +109,7 @@ if __name__ == '__main__':
         T.RandomLinkSplit(num_val=0.05, num_test=0.1, is_undirected=True,
                           split_labels=True, add_negative_train_samples=False),
     ])
-    dataset = MyOwnDataset(root='home/csolis/pytorch_datasets', transform=transform)
+    dataset = MyOwnDataset(root='/home/csolis/data/pyg_datasets/', transform=transform)
     loader = DataLoader(data_list, batch_size=4)
     adj, features = load_data('cora')
     for i, batch in enumerate(loader):
