@@ -59,7 +59,7 @@ from torch_geometric.data import InMemoryDataset, download_url
 class MyOwnDataset(InMemoryDataset):
     def __init__(self, root, transform=None, pre_transform=None, pre_filter=None):
         super().__init__(root, transform, pre_transform, pre_filter)
-        self.data, self.slices = torch.load(self.processed_paths)
+        #self.data, self.slices = torch.load(self.processed_paths)
         #self.file_dir = file_dir
 
     @property
@@ -113,7 +113,8 @@ if __name__ == '__main__':
         T.RandomLinkSplit(num_val=0.05, num_test=0.1, is_undirected=True,
                           split_labels=True, add_negative_train_samples=False),
     ])
-    dataset = MyOwnDataset(root='/home/csolis/data/pyg_datasets/', transform=transform)
+    #dataset = MyOwnDataset(root='/home/csolis/data/pyg_datasets/', transform=transform)
+    dataset = MyOwnDataset(root='/home/csolis/data/pyg_datasets/')
     data_list = json_to_sparse_matrix(args.file_dir)
 
     loader = DataLoader(data_list, batch_size=4)
