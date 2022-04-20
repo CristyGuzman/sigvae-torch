@@ -86,7 +86,7 @@ class MyOwnDataset(InMemoryDataset):
         if self.pre_transform is not None:
             data_list = [self.pre_transform(data) for data in data_list]
 
-        #data, slices = self.collate(data_list)
+        self.data, self.slices = self.collate(data_list)
         print(self.processed_paths)
         for i, data in enumerate(data_list):
             torch.save(data, os.path.join(self.processed_dir, f'data_{i}.pt'))
