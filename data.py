@@ -68,7 +68,8 @@ class MyOwnDataset(InMemoryDataset):
 
     @property
     def processed_file_names(self):
-        return 'not_implemented.pt'
+        return [f'data_{i}.pt' for i in range(len(self.raw_paths))]
+
 
     #def download(self):
         # Download to `self.raw_dir`.
