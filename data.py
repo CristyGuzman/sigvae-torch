@@ -115,6 +115,7 @@ if __name__ == '__main__':
     ])
     dataset = MyOwnDataset(root='/home/csolis/data/pyg_datasets/', transform=transform)
     dataset[0]
+    loader = DataLoader(dataset, batch_size=3)
     #dataset = MyOwnDataset(root='/home/csolis/data/pyg_datasets/')
     data_list = json_to_sparse_matrix(args.file_dir)
 
