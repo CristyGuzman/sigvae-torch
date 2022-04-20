@@ -26,7 +26,7 @@ def json_to_sparse_matrix(file_dir):
     adj_features_list = []
     #for file in tqdm(os.listdir(file_dir)):
     for file in tqdm(file_dir):
-        with open(os.path.join(file_dir, file), 'r') as f:
+        with open(file, 'r') as f:
             json_dict = json.loads(json.load(f))
             print(f'Loading {len(json_dict)} items from file')
             for key, _ in json_dict.items():
