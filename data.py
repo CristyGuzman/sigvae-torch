@@ -114,6 +114,7 @@ if __name__ == '__main__':
                           split_labels=True, add_negative_train_samples=False),
     ])
     dataset = MyOwnDataset(root='/home/csolis/data/pyg_datasets/', transform=transform)
+    dataset[0]
     #dataset = MyOwnDataset(root='/home/csolis/data/pyg_datasets/')
     data_list = json_to_sparse_matrix(args.file_dir)
 
