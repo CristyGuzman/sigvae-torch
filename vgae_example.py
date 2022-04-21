@@ -76,7 +76,7 @@ if __name__ == '__main__':
     ])
     dataset = MyOwnDataset(root='/home/csolis/data/pyg_datasets/', transform=transform)
     dataset[0]
-    loader = DataLoader(dataset, batch_size=3)
+    loader = DataLoader(dataset, batch_size=1)
 
     in_channels, out_channels = dataset.num_features, 16
 
@@ -95,6 +95,19 @@ if __name__ == '__main__':
             if i % args.validation_steps == 0:
                 auc, ap = test(test_data)
                 print(f'Iteration: {i:03d}, AUC: {auc:.4f}, AP: {ap:.4f}')
+
+    # get final embeddings
+    transform_test = T.Compose([
+        T.NormalizeFeatures(),
+        T.ToDevice(device),
+    ])
+    dataset_test = MyOwnDataset(root='/home/csolis/data/pyg_datasets/', transform=transform_test)
+    loader = DataLoader(dataset_test, batch_size=1)
+    model.eval()
+    for i, data in enumerate(loader):
+        z = model.encode(data.x, data.edge_index)
+        torch.save(z, f'/home/csolis/test/embeddings/emb_{i:03d}.pt')
+
 
 
 
