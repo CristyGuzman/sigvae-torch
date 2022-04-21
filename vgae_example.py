@@ -91,7 +91,7 @@ if __name__ == '__main__':
         T.RandomLinkSplit(num_val=0.05, num_test=0.1, is_undirected=True,
                           split_labels=True, add_negative_train_samples=False),
     ])
-    dataset = MyOwnDataset(root=args.dir_train_data, dir=args.dir_train_data, transform=transform)
+    dataset = MyOwnDataset(root=args.dir_train_data, directory=args.dir_train_data, transform=transform)
     dataset[0]
     loader = DataLoader(dataset, batch_size=args.batch_size)
 
