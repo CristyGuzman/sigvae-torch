@@ -65,7 +65,8 @@ class MyOwnDataset(InMemoryDataset):
 
     @property
     def raw_file_names(self):
-        return os.listdir(os.path.join(self.dir, 'raw'))
+        return os.listdir('/home/csolis/data/pyg_datasets/train/raw')
+
 
     @property
     def processed_file_names(self):
