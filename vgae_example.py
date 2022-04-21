@@ -1,5 +1,6 @@
 import argparse
 import os
+import pickle
 import shutil
 import os.path as osp
 from data import MyOwnDataset
@@ -102,16 +103,25 @@ if __name__ == '__main__':
 
     model = model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
-
+    losses = []
+    aucs = []
     for epoch in range(1, args.epochs + 1):
         print(f'Epoch: {epoch:03d}')
         for i, data in tqdm(enumerate(loader)):
             train_data, val_data, test_data = data
             loss = train()
+            losses.append()
             #print(f'Loss: {loss:.4f}')
             if i % args.validation_steps == 0:
+                print(loss)
                 auc, ap = test(test_data)
+                aucs.append(auc)
                 #print(f'Iteration: {i:03d}, AUC: {auc:.4f}, AP: {ap:.4f}')
+    print('Saving losses to dir')
+    with open('/home/csolis/losses', 'wb') as f:
+        pickle.dump(losses)
+    with open('/home/csolis/auc', 'wb') as f:
+        pickle.dump(aucs)
 
     # get final embeddings
     transform_test = T.Compose([
@@ -124,6 +134,7 @@ if __name__ == '__main__':
     if os.path.exists(args.save_embeddings_dir) and os.path.isdir(args.save_embeddings_dir):
         shutil.rmtree(args.save_embeddings_dir)
         os.mkdir(args.save_embedding_dir)
+    print('Finished training.')
     for i, data in enumerate(loader):
         z = model.encode(data.x, data.edge_index)
         torch.save(z, os.path.join(args.save_embeddings_dir, f'{args.encoder_type}', f'emb_{i:03d}.pt'))
