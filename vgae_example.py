@@ -117,6 +117,7 @@ if __name__ == '__main__':
                 auc, ap = test(test_data)
                 aucs.append(auc)
                 #print(f'Iteration: {i:03d}, AUC: {auc:.4f}, AP: {ap:.4f}')
+    print('Finished training.')
     print('Saving losses to dir')
     with open('/home/csolis/losses', 'wb') as f:
         pickle.dump(losses)
@@ -134,7 +135,7 @@ if __name__ == '__main__':
     if os.path.exists(args.save_embeddings_dir) and os.path.isdir(args.save_embeddings_dir):
         shutil.rmtree(args.save_embeddings_dir)
         os.mkdir(args.save_embedding_dir)
-    print('Finished training.')
+
     for i, data in enumerate(loader):
         z = model.encode(data.x, data.edge_index)
         torch.save(z, os.path.join(args.save_embeddings_dir, f'{args.encoder_type}', f'emb_{i:03d}.pt'))
