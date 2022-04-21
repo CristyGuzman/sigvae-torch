@@ -106,7 +106,7 @@ if __name__ == '__main__':
             print(f'Epoch: {epoch:03d}')
             if i % args.validation_steps == 0:
                 auc, ap = test(test_data)
-                print(f'Epoch: {epoch:03d}, AUC: {auc:.4f}, AP: {ap:.4f}')
+                print(f'Epoch: {epoch:03d}, Iteration: {i:03d}, AUC: {auc:.4f}, AP: {ap:.4f}')
 
 
 
