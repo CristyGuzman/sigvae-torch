@@ -18,7 +18,7 @@ from encoders import GINEncoder, GCNEncoder, GATEncoder
 
 
 class VariationalEncoder(torch.nn.Module):
-    def __init__(self, in_channels, out_channels, encoder_type):
+    def __init__(self, in_channels, out_channels, encoder_type, **kwargs):
         super().__init__()
         self.encoder_type = encoder_type
         if self.encoder_type == 'gcn':
@@ -26,15 +26,23 @@ class VariationalEncoder(torch.nn.Module):
             self.conv_mu = GCNConv(2 * out_channels, out_channels)
             self.conv_logstd = GCNConv(2 * out_channels, out_channels)
         elif self.encoder_type == 'gin':
-            self.conv1 = GINEncoder(2, in_channels, 2 * out_channels, 2 * out_channels)
+            if 'num_layers' not in kwargs:
+                raise ValueError('Number of layers were not provided')
+            else:
+                self.num_layers = kwargs['num_layers']
+            self.conv1 = GINEncoder(self.num_layers, in_channels, 2 * out_channels, 2 * out_channels)
             self.conv_mu = GINEncoder(1, 2 * out_channels, 2 * out_channels, out_channels)
             self.conv_logstd = GINEncoder(1, 2 * out_channels, out_channels, out_channels)
         elif self.encoder_type == 'gat':
-            self.conv1 = GATEncoder(in_channels=in_channels, hid_channels=2*out_channels, heads=5, out_channels=2*out_channels, dropout=0.6)
+            if 'dropout' not in kwargs:
+                raise ValueError('Dropout not provided')
+            else:
+                self.dropout = kwargs['dropout']
+            self.conv1 = GATEncoder(in_channels=in_channels, hid_channels=2*out_channels, heads=5, out_channels=2*out_channels, dropout=self.dropout)
             self.conv_mu = GATEncoder(in_channels=2*out_channels, hid_channels=2*out_channels, heads=5,
-                                   out_channels=out_channels, dropout=0.6)
+                                   out_channels=out_channels, dropout=self.dropout)
             self.conv_logstd = GATEncoder(in_channels=2 * out_channels, hid_channels=2 * out_channels, heads=5,
-                                      out_channels=out_channels, dropout=0.6)
+                                      out_channels=out_channels, dropout=self.dropout)
 
     def forward(self, x, edge_index):
         x = self.conv1(x, edge_index).relu()
@@ -62,11 +70,17 @@ def test(data):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--dir_train_data', default='/home/csolis/data/pyg_datasets/train')
+    parser.add_argument('--dir_test_data', default='/home/csolis/data/pyg_datasets/test')
+    parser.add_argument('--out_channels', type=int, default=16)
+    parser.add_argument('--dropout', type=float, default=0.6)
+    parser.add_argument('--num_layers', type=int, default=2)
+    parser.add_argument('--batch_size', default=1, type=int)
     parser.add_argument('--encoder_type', default='gcn')
     parser.add_argument('--epochs', type=int, default=400)
     parser.add_argument('--validation_steps', type=int, default=10)
     args = parser.parse_args()
-
+    print(f'Arguments:\n {args}')
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     transform = T.Compose([
         T.NormalizeFeatures(),
@@ -74,13 +88,13 @@ if __name__ == '__main__':
         T.RandomLinkSplit(num_val=0.05, num_test=0.1, is_undirected=True,
                           split_labels=True, add_negative_train_samples=False),
     ])
-    dataset = MyOwnDataset(root='/home/csolis/data/pyg_datasets/', transform=transform)
+    dataset = MyOwnDataset(root=args.dir_train_data, transform=transform)
     dataset[0]
-    loader = DataLoader(dataset, batch_size=1)
+    loader = DataLoader(dataset, batch_size=args.batch_size)
 
-    in_channels, out_channels = dataset.num_features, 16
-
-    model = VGAE(VariationalEncoder(in_channels, out_channels, encoder_type=args.encoder_type))
+    in_channels, out_channels = dataset.num_features, args.out_channels
+    kwargs = {'dropout': args.dropout, 'num_layers': args.num_layers}
+    model = VGAE(VariationalEncoder(in_channels, out_channels, encoder_type=args.encoder_type, **kwargs))
 
 
     model = model.to(device)
@@ -91,18 +105,18 @@ if __name__ == '__main__':
         for i, data in tqdm(enumerate(loader)):
             train_data, val_data, test_data = data
             loss = train()
-            print(f'Loss: {loss:.4f}')
+            #print(f'Loss: {loss:.4f}')
             if i % args.validation_steps == 0:
                 auc, ap = test(test_data)
-                print(f'Iteration: {i:03d}, AUC: {auc:.4f}, AP: {ap:.4f}')
+                #print(f'Iteration: {i:03d}, AUC: {auc:.4f}, AP: {ap:.4f}')
 
     # get final embeddings
     transform_test = T.Compose([
         T.NormalizeFeatures(),
         T.ToDevice(device),
     ])
-    dataset_test = MyOwnDataset(root='/home/csolis/data/pyg_datasets/', transform=transform_test)
-    loader = DataLoader(dataset_test, batch_size=1)
+    dataset_test = MyOwnDataset(root=args.dir_test_data, transform=transform_test)
+    loader = DataLoader(dataset_test, batch_size=args.batch_size)
     model.eval()
     for i, data in enumerate(loader):
         z = model.encode(data.x, data.edge_index)
