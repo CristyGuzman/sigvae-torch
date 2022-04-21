@@ -1,4 +1,6 @@
 import argparse
+import os
+import shutil
 import os.path as osp
 from data import MyOwnDataset
 import torch
@@ -79,6 +81,7 @@ if __name__ == '__main__':
     parser.add_argument('--encoder_type', default='gcn')
     parser.add_argument('--epochs', type=int, default=400)
     parser.add_argument('--validation_steps', type=int, default=10)
+    parser.add_argument('--save_embeddings_dir', default='/home/csolis/data/embeddings')
     args = parser.parse_args()
     print(f'Arguments:\n {args}')
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -118,9 +121,12 @@ if __name__ == '__main__':
     dataset_test = MyOwnDataset(root=args.dir_test_data, transform=transform_test)
     loader = DataLoader(dataset_test, batch_size=args.batch_size)
     model.eval()
+    if os.path.exists(args.save_embeddings_dir) and os.path.isdir(args.save_embeddings_dir):
+        shutil.rmtree(args.save_embeddings_dir)
+        os.mkdir(args.save_embedding_dir)
     for i, data in enumerate(loader):
         z = model.encode(data.x, data.edge_index)
-        torch.save(z, f'/home/csolis/test/embeddings/emb_{i:03d}.pt')
+        torch.save(z, os.path.join(args.save_embeddings_dir, f'{args.encoder_type}', f'emb_{i:03d}.pt'))
 
 
 
