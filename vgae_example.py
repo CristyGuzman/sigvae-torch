@@ -36,8 +36,8 @@ class VariationalEncoder(torch.nn.Module):
             self.conv_logstd = GCNConv(2 * out_channels, out_channels)
         elif self.encoder_type == 'gin':
             self.conv1 = GINEncoder(2, in_channels, 2 * out_channels, 2 * out_channels)
-            self.conv_mu = GINEncoder(1, 2 * out_channels, out_channels)
-            self.conv_logstd = GINEncoder(1, 2 * out_channels, out_channels)
+            self.conv_mu = GINEncoder(1, 2 * out_channels, 2 * out_channels, out_channels)
+            self.conv_logstd = GINEncoder(1, 2 * out_channels, out_channels, out_channels)
 
     def forward(self, x, edge_index):
         x = self.conv1(x, edge_index).relu()
