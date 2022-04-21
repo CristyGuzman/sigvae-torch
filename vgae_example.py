@@ -110,7 +110,7 @@ if __name__ == '__main__':
         for i, data in tqdm(enumerate(loader)):
             train_data, val_data, test_data = data
             loss = train()
-            losses.append()
+            losses.append(loss)
             #print(f'Loss: {loss:.4f}')
             if i % args.validation_steps == 0:
                 print(loss)
