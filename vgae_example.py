@@ -119,7 +119,7 @@ if __name__ == '__main__':
 
     in_channels, out_channels = dataset.num_features, 16
 
-    model = VGAE(VariationalEncoder(in_channels, out_channels))
+    model = VGAE(VariationalEncoder(in_channels, out_channels, encoder_type=args.encoder_type))
 
 
     model = model.to(device)
