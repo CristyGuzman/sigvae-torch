@@ -10,6 +10,9 @@ from torch_geometric.loader import DataLoader
 from torch_geometric.datasets import Planetoid
 from torch_geometric.nn import GAE, VGAE, GCNConv
 from torch_geometric.utils import train_test_split_edges
+from torch_geometric.nn import GINConv, global_add_pool
+import torch.nn.functional as F
+from torch.nn import BatchNorm1d, Linear, ReLU, Sequential
 
 
 class GCNEncoder(torch.nn.Module):
@@ -23,35 +26,60 @@ class GCNEncoder(torch.nn.Module):
         return self.conv2(x, edge_index)
 
 
-class VariationalGCNEncoder(torch.nn.Module):
-    def __init__(self, in_channels, out_channels):
+class VariationalEncoder(torch.nn.Module):
+    def __init__(self, in_channels, out_channels, encoder_type):
         super().__init__()
-        self.conv1 = GCNConv(in_channels, 2 * out_channels)
-        self.conv_mu = GCNConv(2 * out_channels, out_channels)
-        self.conv_logstd = GCNConv(2 * out_channels, out_channels)
+        self.encoder_type = encoder_type
+        if self.encoder_type == 'gcn':
+            self.conv1 = GCNConv(in_channels, 2 * out_channels)
+            self.conv_mu = GCNConv(2 * out_channels, out_channels)
+            self.conv_logstd = GCNConv(2 * out_channels, out_channels)
+        elif self.encoder_type == 'gin':
+            self.conv1 = GINEncoder(2, in_channels, 2 * out_channels, 2 * out_channels)
+            self.conv_mu = GINEncoder(1, 2 * out_channels, out_channels)
+            self.conv_logstd = GINEncoder(1, 2 * out_channels, out_channels)
 
     def forward(self, x, edge_index):
         x = self.conv1(x, edge_index).relu()
         return self.conv_mu(x, edge_index), self.conv_logstd(x, edge_index)
 
 
-class LinearEncoder(torch.nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super().__init__()
-        self.conv = GCNConv(in_channels, out_channels)
+class GINEncoder(torch.nn.Module):
+    def __init__(self, num_layers, in_channels, hid_channels, out_channels):
+        super(GINEncoder, self).__init__()
+        self.in_channels = in_channels
+        self.hid_channels = hid_channels
+        self.out_channels = out_channels
+        self.num_layers = num_layers
+        self.layers = torch.nn.ModuleList()
+        if self.num_layers == 1:
+            self.layers.append(GINConv(Sequential(
+                Linear(self.in_channels, self.hid_channels), BatchNorm1d(self.hid_channels), ReLU(),
+                           Linear(self.hid_channels, self.out_channels), ReLU())))
+        else:
+            self.layers.append(GINConv(Sequential(
+                Linear(self.in_channels, self.hid_channels), BatchNorm1d(self.hid_channels), ReLU(),
+                Linear(self.hid_channels, self.hid_channels), ReLU())))
+
+        if num_layers > 2:
+            for i in range(num_layers-2):
+                self.layers.append(GINConv(
+                Sequential(Linear(self.hid_channels, self.hid_channels), BatchNorm1d(self.hid_channels), ReLU(),
+                           Linear(self.hid_channels, self.hid_channels), ReLU())))
+
+        if self.num_layers > 1:
+            self.layers.append(GINConv(
+                Sequential(Linear(self.hid_channels, self.hid_channels), Linear(self.hid_channels, self.out_channels))))
 
     def forward(self, x, edge_index):
-        return self.conv(x, edge_index)
+        for i in range(len(self.layers)):
+            x = self.layers[i](x, edge_index)
+
+        return x
 
 
-class VariationalLinearEncoder(torch.nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super().__init__()
-        self.conv_mu = GCNConv(in_channels, out_channels)
-        self.conv_logstd = GCNConv(in_channels, out_channels)
 
-    def forward(self, x, edge_index):
-        return self.conv_mu(x, edge_index), self.conv_logstd(x, edge_index)
+
 
 def train():
     model.train()
@@ -73,7 +101,7 @@ def test(data):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--linear', action='store_true')
+    parser.add_argument('--encoder_type', default='gcn')
     parser.add_argument('--epochs', type=int, default=400)
     parser.add_argument('--validation_steps', type=int, default=10)
     args = parser.parse_args()
@@ -91,10 +119,8 @@ if __name__ == '__main__':
 
     in_channels, out_channels = dataset.num_features, 16
 
-    if not args.linear:
-        model = VGAE(VariationalGCNEncoder(in_channels, out_channels))
-    else:
-        model = VGAE(VariationalLinearEncoder(in_channels, out_channels))
+    model = VGAE(VariationalEncoder(in_channels, out_channels))
+
 
     model = model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
