@@ -75,6 +75,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--linear', action='store_true')
     parser.add_argument('--epochs', type=int, default=400)
+    parser.add_argument('--validation_steps', default=10)
     args = parser.parse_args()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
