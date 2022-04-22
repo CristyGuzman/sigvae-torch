@@ -72,4 +72,36 @@ class GATEncoder(torch.nn.Module):
         return x
 
 
+class VariationalEncoder(torch.nn.Module):
+    def __init__(self, in_channels, out_channels, encoder_type, **kwargs):
+        super().__init__()
+        self.encoder_type = encoder_type
+        if self.encoder_type == 'gcn':
+            self.conv1 = GCNConv(in_channels, 2 * out_channels)
+            self.conv_mu = GCNConv(2 * out_channels, out_channels)
+            self.conv_logstd = GCNConv(2 * out_channels, out_channels)
+        elif self.encoder_type == 'gin':
+            if 'num_layers' not in kwargs:
+                raise ValueError('Number of layers were not provided')
+            else:
+                self.num_layers = kwargs['num_layers']
+            self.conv1 = GINEncoder(self.num_layers, in_channels, 2 * out_channels, 2 * out_channels)
+            self.conv_mu = GINEncoder(1, 2 * out_channels, 2 * out_channels, out_channels)
+            self.conv_logstd = GINEncoder(1, 2 * out_channels, out_channels, out_channels)
+        elif self.encoder_type == 'gat':
+            if 'dropout' not in kwargs:
+                raise ValueError('Dropout not provided')
+            else:
+                self.dropout = kwargs['dropout']
+            self.conv1 = GATEncoder(in_channels=in_channels, hid_channels=2*out_channels, heads=5, out_channels=2*out_channels, dropout=self.dropout)
+            self.conv_mu = GATEncoder(in_channels=2*out_channels, hid_channels=2*out_channels, heads=5,
+                                   out_channels=out_channels, dropout=self.dropout)
+            self.conv_logstd = GATEncoder(in_channels=2 * out_channels, hid_channels=2 * out_channels, heads=5,
+                                      out_channels=out_channels, dropout=self.dropout)
+
+    def forward(self, x, edge_index):
+        x = self.conv1(x, edge_index).relu()
+        return self.conv_mu(x, edge_index), self.conv_logstd(x, edge_index)
+
+
 
