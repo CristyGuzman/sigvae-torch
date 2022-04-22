@@ -103,6 +103,7 @@ if __name__ == '__main__':
                 aucs.append(auc)
                 with open(os.path.join('/home/csolis/auc', f'auc_{model_name}.pkl'), 'ab') as f:
                     pickle.dump(aucs, f)
+                writer.add_scalar('AUC/train/test', auc, it)
                 #print(f'Iteration: {i:03d}, AUC: {auc:.4f}, AP: {ap:.4f}')
         print(f'Loss of epochs last iteration: {loss}')
     print('Finished training.')
