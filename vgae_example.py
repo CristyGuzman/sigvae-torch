@@ -11,9 +11,10 @@ from torch_geometric.nn.models.autoencoder import VGAE
 from encoders import VariationalEncoder
 import yaml
 
-CONFIG_PATH = "./"
-def load_config(config_name):
-    with open(os.path.join(CONFIG_PATH, config_name)) as file:
+#CONFIG_PATH = "./"
+def load_config(config_path):
+    #with open(os.path.join(CONFIG_PATH, config_name)) as file:
+    with open(config_path) as file:
         config = yaml.safe_load(file)
 
     return config
@@ -50,11 +51,12 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=1, type=int)
     parser.add_argument('--encoder_type', default='gcn')
     parser.add_argument('--epochs', type=int, default=400)
+    parser.add_argument('--default_cfg_path', default='/home/csolis/cfgs/default_config.yaml')
     parser.add_argument('--validation_steps', type=int, default=100)
     parser.add_argument('--save_embeddings_dir', default='/home/csolis/data/embeddings')
     args = parser.parse_args()
     print(f'Arguments:\n {args}')
-    config = load_config("default_config.yaml")
+    config = load_config(args.default_cfg_path)
     print(f'config is {config}')
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'Device is {device}')
