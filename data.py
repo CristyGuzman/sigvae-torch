@@ -28,7 +28,7 @@ def json_to_sparse_matrix(file_dir):
     for file in tqdm(file_dir):
         with open(file, 'r') as f:
             json_dict = json.loads(json.load(f))
-            print(f'Loading {len(json_dict)} items from file')
+            #print(f'Loading {len(json_dict)} items from file')
             for key, _ in json_dict.items():
                 sparse_adj = nx.to_scipy_sparse_matrix(json_graph.adjacency_graph(json_dict[key]))
                 adj_norm = preprocess_graph(sparse_adj)
@@ -89,7 +89,7 @@ class MyOwnDataset(InMemoryDataset):
             data_list = [self.pre_transform(data) for data in data_list]
 
         data, slices = self.collate(data_list)
-        print(self.processed_paths)
+        #print(self.processed_paths)
         #for i, data in enumerate(data_list):
         #    torch.save(data, os.path.join(self.processed_dir, f'data_{i}.pt'))
         torch.save((data, slices), self.processed_paths[0])
