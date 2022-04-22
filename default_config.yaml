@@ -2,6 +2,7 @@ data:
   train_data_dir: /home/csolis/data/pyg_datasets/train
   test_data_dir: /home/csolis/data/pyg_datasets/test
 optimizer:
+  name: sgd
   weight_decay: 0.0001
   momentum: 0.9
   nesterov: True
