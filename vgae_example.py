@@ -87,14 +87,14 @@ if __name__ == '__main__':
             train_data, val_data, test_data = data
             loss = train()
             losses.append(loss)
-            with open(os.path.join('/home/csolis/losses', f'losses_{model_name}.pkl'), 'a') as f:
+            with open(os.path.join('/home/csolis/losses', f'losses_{model_name}.pkl'), 'ab') as f:
                 pickle.dump(losses, f)
             #print(f'Loss: {loss:.4f}')
             if i % args.validation_steps == 0:
                 #print(loss)
                 auc, ap = test(test_data)
                 aucs.append(auc)
-                with open(os.path.join('/home/csolis/auc', f'auc_{model_name}.pkl'), 'a') as f:
+                with open(os.path.join('/home/csolis/auc', f'auc_{model_name}.pkl'), 'ab') as f:
                     pickle.dump(aucs, f)
                 #print(f'Iteration: {i:03d}, AUC: {auc:.4f}, AP: {ap:.4f}')
         print(f'Loss of epochs last iteration: {loss}')
