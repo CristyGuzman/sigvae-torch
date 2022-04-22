@@ -10,6 +10,7 @@ from torch_geometric.loader import DataLoader
 from torch_geometric.nn.models.autoencoder import VGAE
 from encoders import VariationalEncoder
 import yaml
+from torch.utils.tensorboard import SummaryWriter
 
 #CONFIG_PATH = "./"
 def load_config(config_path):
@@ -48,6 +49,9 @@ if __name__ == '__main__':
     parser.add_argument('--default_cfg_path', default='/home/csolis/cfgs/default_config.yaml')
     args = parser.parse_args()
     print(f'Arguments:\n {args}')
+
+    writer = SummaryWriter()
+
     config = load_config(args.default_cfg_path)
     print(f'config is {config}')
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -87,6 +91,7 @@ if __name__ == '__main__':
             train_data, val_data, test_data = data
             loss = train()
             losses.append(loss)
+            writer.add_scalar('Loss/train', loss, i)
             with open(os.path.join('/home/csolis/losses', f'losses_{model_name}.pkl'), 'ab') as f:
                 pickle.dump(losses, f)
             #print(f'Loss: {loss:.4f}')
