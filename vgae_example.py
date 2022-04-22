@@ -44,6 +44,7 @@ def test(data):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_layers', type=int, default=2)
+    parser.add_argument('--validation_steps', type=int, default=100)
     parser.add_argument('--default_cfg_path', default='/home/csolis/cfgs/default_config.yaml')
     args = parser.parse_args()
     print(f'Arguments:\n {args}')
