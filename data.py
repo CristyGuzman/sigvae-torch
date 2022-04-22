@@ -40,7 +40,7 @@ def json_to_sparse_matrix(file_dir):
                 pos_weight = torch.unsqueeze(pos_weight, dim=0)
                 norm = sparse_adj.shape[0] * sparse_adj.shape[0] / float((sparse_adj.shape[0] * sparse_adj.shape[0] - sparse_adj.sum()) * 2)
                 norm = torch.unsqueeze(torch.tensor(norm), dim=0)
-                x = torch.eye(1000)[:sparse_adj.shape[0]]
+                x = torch.transpose(torch.eye(1000)[:sparse_adj.shape[0]], 0, 1)
                 edge_index, edge_attrs = from_scipy_sparse_matrix(sparse_adj)
                 data = MyData(x=x.T, edge_index=edge_index)
                 #data.adj_norm = adj_norm
