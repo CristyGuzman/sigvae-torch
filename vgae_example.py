@@ -75,6 +75,7 @@ if __name__ == '__main__':
     model = model.to(device)
     optim_name = config['optimizer']['name']
     if optim_name == 'sgd':
+        print('using sgd')
         optimizer = torch.optim.SGD(model.parameters(),
                                     lr=config['optimizer']['lr'],
                                     weight_decay=config['optimizer']['weight_decay'],
