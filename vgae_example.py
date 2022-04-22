@@ -55,6 +55,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print(f'Arguments:\n {args}')
     config = load_config("default_config.yaml")
+    print(f'config is {config}')
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'Device is {device}')
     transform = T.Compose([
@@ -63,13 +64,14 @@ if __name__ == '__main__':
         T.RandomLinkSplit(num_val=0.05, num_test=0.1, is_undirected=True,
                           split_labels=True, add_negative_train_samples=False),
     ])
-    dataset = MyOwnDataset(root=args.dir_train_data, directory=args.dir_train_data, transform=transform)
+    dataset = MyOwnDataset(root=config['data']['train_data_dir'], directory=config['data']['train_data_dir'], transform=transform)
     dataset[0]
-    loader = DataLoader(dataset, batch_size=args.batch_size)
+    loader = DataLoader(dataset, batch_size=config['train']['batch_size'])
+    model_name = config['model']['name']
 
-    in_channels, out_channels = dataset.num_features, args.out_channels
-    kwargs = {'dropout': args.dropout, 'num_layers': args.num_layers}
-    model = VGAE(VariationalEncoder(in_channels, out_channels, encoder_type=args.encoder_type, **kwargs))
+    in_channels, out_channels = dataset.num_features, config['model']['layers']['output_layer']
+    kwargs = {'dropout': config['model']['dropout'], 'num_layers': args.num_layers}
+    model = VGAE(VariationalEncoder(in_channels, out_channels, encoder_type=model_name, **kwargs))
 
 
     model = model.to(device)
@@ -85,7 +87,7 @@ if __name__ == '__main__':
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
     losses = []
     aucs = []
-    for epoch in range(1, args.epochs + 1):
+    for epoch in range(1, config['train']['epochs'] + 1):
         print(f'Epoch: {epoch:03d}')
         for i, data in tqdm(enumerate(loader)):
             train_data, val_data, test_data = data
@@ -100,9 +102,9 @@ if __name__ == '__main__':
         print(f'Loss of epochs last iteration: {loss}')
     print('Finished training.')
     print('Saving losses to dir')
-    with open(os.path.join('/home/csolis/losses', f'losses_{args.encoder_type}.pkl'), 'wb') as f:
+    with open(os.path.join('/home/csolis/losses', f'losses_{model_name}.pkl'), 'wb') as f:
         pickle.dump(losses)
-    with open(os.path.join('/home/csolis/auc', f'auc_{args.encoder_type}.pkl'), 'wb') as f:
+    with open(os.path.join('/home/csolis/auc', f'auc_{model_name}.pkl'), 'wb') as f:
         pickle.dump(aucs)
 
     # get final embeddings
