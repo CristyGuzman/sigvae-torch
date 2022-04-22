@@ -81,7 +81,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=1, type=int)
     parser.add_argument('--encoder_type', default='gcn')
     parser.add_argument('--epochs', type=int, default=400)
-    parser.add_argument('--validation_steps', type=int, default=10)
+    parser.add_argument('--validation_steps', type=int, default=100)
     parser.add_argument('--save_embeddings_dir', default='/home/csolis/data/embeddings')
     args = parser.parse_args()
     print(f'Arguments:\n {args}')
@@ -113,10 +113,11 @@ if __name__ == '__main__':
             losses.append(loss)
             #print(f'Loss: {loss:.4f}')
             if i % args.validation_steps == 0:
-                print(loss)
+                #print(loss)
                 auc, ap = test(test_data)
                 aucs.append(auc)
                 #print(f'Iteration: {i:03d}, AUC: {auc:.4f}, AP: {ap:.4f}')
+        print(f'Loss of epochs last iteration: {loss}')
     print('Finished training.')
     print('Saving losses to dir')
     with open(os.path.join('/home/csolis/losses', f'losses_{args.encoder_type}.pkl'), 'wb') as f:
