@@ -1,0 +1,20 @@
+data:
+  train_data_dir: /home/csolis/data/pyg_datasets/train
+  test_data_dir: /home/csolis/data/pyg_datasets/test
+optimizer:
+  weight_decay: 0.0001
+  momentum: 0.9
+  nesterov: True
+  lr: 0.0001
+model:
+  name: gin
+  dropout: 0.6
+  layers:
+    hidden_layers:
+      layer_1:
+    output_layer: 16
+train:
+  epochs: 500
+  batch_size: 1
+save_embeddings: /home/csolis/data/embeddings
+
