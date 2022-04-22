@@ -43,17 +43,8 @@ def test(data):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dir_train_data', default='/home/csolis/data/pyg_datasets/train')
-    parser.add_argument('--dir_test_data', default='/home/csolis/data/pyg_datasets/test')
-    parser.add_argument('--out_channels', type=int, default=16)
-    parser.add_argument('--dropout', type=float, default=0.6)
     parser.add_argument('--num_layers', type=int, default=2)
-    parser.add_argument('--batch_size', default=1, type=int)
-    parser.add_argument('--encoder_type', default='gcn')
-    parser.add_argument('--epochs', type=int, default=400)
     parser.add_argument('--default_cfg_path', default='/home/csolis/cfgs/default_config.yaml')
-    parser.add_argument('--validation_steps', type=int, default=100)
-    parser.add_argument('--save_embeddings_dir', default='/home/csolis/data/embeddings')
     args = parser.parse_args()
     print(f'Arguments:\n {args}')
     config = load_config(args.default_cfg_path)
