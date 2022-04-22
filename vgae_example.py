@@ -2,54 +2,23 @@ import argparse
 import os
 import pickle
 import shutil
-import os.path as osp
 from data import MyOwnDataset
 import torch
 from tqdm import tqdm
-from utils import load_data, preprocess_graph
-from data import json_to_sparse_matrix
 import torch_geometric.transforms as T
 from torch_geometric.loader import DataLoader
-from torch_geometric.datasets import Planetoid
-from torch_geometric.nn import GAE, VGAE, GCNConv
-from torch_geometric.utils import train_test_split_edges
-from torch_geometric.nn import GINConv, global_add_pool
-import torch.nn.functional as F
-from torch.nn import BatchNorm1d, Linear, ReLU, Sequential
-from encoders import GINEncoder, GCNEncoder, GATEncoder
+from torch_geometric.nn.models.autoencoder import VGAE
+from encoders import VariationalEncoder
+import yaml
+
+CONFIG_PATH = "./"
+def load_config(config_name):
+    with open(os.path.join(CONFIG_PATH, config_name)) as file:
+        config = yaml.safe_load(file)
+
+    return config
 
 
-
-class VariationalEncoder(torch.nn.Module):
-    def __init__(self, in_channels, out_channels, encoder_type, **kwargs):
-        super().__init__()
-        self.encoder_type = encoder_type
-        if self.encoder_type == 'gcn':
-            self.conv1 = GCNConv(in_channels, 2 * out_channels)
-            self.conv_mu = GCNConv(2 * out_channels, out_channels)
-            self.conv_logstd = GCNConv(2 * out_channels, out_channels)
-        elif self.encoder_type == 'gin':
-            if 'num_layers' not in kwargs:
-                raise ValueError('Number of layers were not provided')
-            else:
-                self.num_layers = kwargs['num_layers']
-            self.conv1 = GINEncoder(self.num_layers, in_channels, 2 * out_channels, 2 * out_channels)
-            self.conv_mu = GINEncoder(1, 2 * out_channels, 2 * out_channels, out_channels)
-            self.conv_logstd = GINEncoder(1, 2 * out_channels, out_channels, out_channels)
-        elif self.encoder_type == 'gat':
-            if 'dropout' not in kwargs:
-                raise ValueError('Dropout not provided')
-            else:
-                self.dropout = kwargs['dropout']
-            self.conv1 = GATEncoder(in_channels=in_channels, hid_channels=2*out_channels, heads=5, out_channels=2*out_channels, dropout=self.dropout)
-            self.conv_mu = GATEncoder(in_channels=2*out_channels, hid_channels=2*out_channels, heads=5,
-                                   out_channels=out_channels, dropout=self.dropout)
-            self.conv_logstd = GATEncoder(in_channels=2 * out_channels, hid_channels=2 * out_channels, heads=5,
-                                      out_channels=out_channels, dropout=self.dropout)
-
-    def forward(self, x, edge_index):
-        x = self.conv1(x, edge_index).relu()
-        return self.conv_mu(x, edge_index), self.conv_logstd(x, edge_index)
 
 
 
@@ -85,7 +54,9 @@ if __name__ == '__main__':
     parser.add_argument('--save_embeddings_dir', default='/home/csolis/data/embeddings')
     args = parser.parse_args()
     print(f'Arguments:\n {args}')
+    config = load_config("config.yaml")
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f'Device is {device}')
     transform = T.Compose([
         T.NormalizeFeatures(),
         T.ToDevice(device),
