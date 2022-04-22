@@ -119,9 +119,9 @@ if __name__ == '__main__':
                 #print(f'Iteration: {i:03d}, AUC: {auc:.4f}, AP: {ap:.4f}')
     print('Finished training.')
     print('Saving losses to dir')
-    with open('/home/csolis/losses', 'wb') as f:
+    with open(os.path.join('/home/csolis/losses', f'losses_{args.encoder_type}.pkl'), 'wb') as f:
         pickle.dump(losses)
-    with open('/home/csolis/auc', 'wb') as f:
+    with open(os.path.join('/home/csolis/auc', f'auc_{args.encoder_type}.pkl'), 'wb') as f:
         pickle.dump(aucs)
 
     # get final embeddings
