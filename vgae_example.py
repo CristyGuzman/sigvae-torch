@@ -85,13 +85,15 @@ if __name__ == '__main__':
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
     losses = []
     aucs = []
+    it = 0
     for epoch in range(1, config['train']['epochs'] + 1):
         print(f'Epoch: {epoch:03d}')
         for i, data in tqdm(enumerate(loader)):
             train_data, val_data, test_data = data
+            it += 1
             loss = train()
             losses.append(loss)
-            writer.add_scalar('Loss/train', loss, i)
+            writer.add_scalar('Loss/train', loss, it)
             with open(os.path.join('/home/csolis/losses', f'losses_{model_name}.pkl'), 'ab') as f:
                 pickle.dump(losses, f)
             #print(f'Loss: {loss:.4f}')
