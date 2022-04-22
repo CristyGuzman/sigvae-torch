@@ -54,7 +54,7 @@ if __name__ == '__main__':
     parser.add_argument('--save_embeddings_dir', default='/home/csolis/data/embeddings')
     args = parser.parse_args()
     print(f'Arguments:\n {args}')
-    config = load_config("config.yaml")
+    config = load_config("default_config.yaml")
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'Device is {device}')
     transform = T.Compose([
@@ -73,7 +73,15 @@ if __name__ == '__main__':
 
 
     model = model.to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
+    optim_name = config['optimizer']['name']
+    if optim_name == 'sgd':
+        optimizer = torch.optim.SGD(model.parameters(),
+                                    lr=config['optimizer']['lr'],
+                                    weight_decay=config['optimizer']['weight_decay'],
+                                    momentum=config['optimizer']['momentum'],
+                                    nesterov=config['optimizer']['nesterov'])
+    elif optim_name == 'adam':
+        optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
     losses = []
     aucs = []
     for epoch in range(1, args.epochs + 1):
