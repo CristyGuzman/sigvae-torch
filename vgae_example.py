@@ -150,12 +150,13 @@ def main(config):
     global_step = 0
     for epoch in range(config.n_epochs):
         for i, abatch in tqdm(enumerate(loader)):
-            print(f'Batch is in device {abatch.device}')
+
             start = time.time()
             #optimizer.zero_grad()
 
             train_data, val_data, test_data = abatch
-            train_losses = train(model, optimizer, abatch)
+            print(f'Batch is in device {train_data.device}')
+            train_losses = train(model, optimizer, train_data)
 
             elapsed = time.time() - start
             #losses.append(loss)
