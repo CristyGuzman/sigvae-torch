@@ -71,7 +71,7 @@ class Configuration(object):
 
         # model
         parser.add_argument('--encoder_type', type=str, default='gcn')
-        parser.add_argument('--input_size', type=int, default=16)
+        parser.add_argument('--input_size', type=int)
         parser.add_argument('--hidden_size', type=int, default=32)
         parser.add_argument('--output_size', type=int, default=16)
         parser.add_argument('--num_layers', type=int, default=2)
