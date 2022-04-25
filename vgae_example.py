@@ -113,7 +113,7 @@ def main(config):
     me = Metrics()
     if config.input_size is None:
         config.input_size = dataset.num_features
-    model = VGAE2(VariationalEncoder(config))
+    model = VGAE2(config=config, encoder=VariationalEncoder(config=config))
     model = model.to(C.DEVICE)
     experiment_id = int(time.time())
     experiment_name = model.model_name()
