@@ -34,6 +34,7 @@ class Metrics(object):
                 self.metrics_agg[m] += np.sum(new_metrics[m], axis=0)
 
         # keep track of the total number of samples processed
+        print(f"New metrics are: {new_metrics}")
         batch_size = new_metrics[list(new_metrics.keys())[0]].shape[0]
         self.n_samples += batch_size
 
