@@ -79,7 +79,7 @@ class VariationalEncoder(torch.nn.Module):
         self.config = config
         self.encoder_type = config.encoder_type
         self.in_channels = config.input_size
-        self.out_channels = config.out_size
+        self.out_channels = config.output_size
         if self.encoder_type == 'gcn':
             self.conv1 = GCNConv(self.in_channels, 2 * self.out_channels)
             self.conv_mu = GCNConv(2 * self.out_channels, self.out_channels)
