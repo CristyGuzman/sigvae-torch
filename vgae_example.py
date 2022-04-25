@@ -1,4 +1,5 @@
 import argparse
+import collections
 import os
 import pickle
 import shutil
@@ -16,6 +17,8 @@ from configuration import Configuration
 import time
 from torch import nn
 import sys
+import numpy as np
+from metrics import Metrics
 
 #CONFIG_PATH = "./"
 def load_config(config_path):
@@ -27,25 +30,45 @@ def load_config(config_path):
 
 
 
+def get_losses(model, z, data):
+    recon_loss = model.recon_loss(z, data.pos_edge_label_index)
+    kl_loss = model.kl_loss
+    loss = recon_loss + (1 / data.num_nodes) * kl_loss
+    return loss, {'total_loss': float(loss), 'recon_loss': float(recon_loss), 'kl_loss': float(kl_loss)}
 
-
-def train(model):
+def train(model, optimizer, data):
     model.train()
     optimizer.zero_grad()
-    z = model.encode(train_data.x, train_data.edge_index)
-    recon_loss = model.recon_loss(z, train_data.pos_edge_label_index)
-    kl_loss = model.kl_loss
-    loss = recon_loss + (1 / train_data.num_nodes) * kl_loss
+    z = model.encode(data.x, data.edge_index)
+    #recon_loss = model.recon_loss(z, data.pos_edge_label_index)
+    loss, losses = get_losses(model, z, data)
+    #loss = losses['total_loss']
+    #kl_loss = model.kl_loss
+    #loss = recon_loss + (1 / train_data.num_nodes) * kl_loss
     loss.backward()
     nn.utils.clip_grad_norm(model.parameters(), max_norm=1)
     optimizer.step()
-    return {'total_loss': float(loss), 'recon_loss': float(recon_loss), 'kl_loss': float(kl_loss)}
+    return losses
 
 @torch.no_grad()
-def test(model, data):
-    model.eval()
-    z = model.encode(data.x, data.edge_index)
-    return model.test(z, data.pos_edge_label_index, data.neg_edge_label_index)
+def test(model, data, metrics_engine):
+    loss_vals_agg = collections.defaultdict(float)
+    n_samples = 0
+    #model.eval()
+    for i, abatch in tqdm(enumerate(data)):
+        _, valid_data,_ = abatch
+        z = model.encode(valid_data.x, valid_data.edge_index)
+        losses = get_losses(model, z, data)
+        for k in losses:
+            loss_vals_agg += losses[k]*valid_data.batch_size
+        targets, preds = model.test(z, data.pos_edge_label_index, data.neg_edge_label_index)
+        metrics_engine.compute_and_aggregate(preds, targets)
+        n_samples += valid_data.batch_size
+
+    for k in loss_vals_agg:
+        loss_vals_agg[k] /= n_samples
+
+    return loss_vals_agg
 
 def create_model_dir(experiment_main_dir, experiment_id, model_summary):
     """
@@ -62,6 +85,12 @@ def create_model_dir(experiment_main_dir, experiment_id, model_summary):
     os.makedirs(model_dir)
     return model_dir
 
+def to_tensorboard_log(metrics, writer, global_step, prefix=''):
+    """Write metrics to tensorboard."""
+    for m in metrics:
+        writer.add_scalar('{}/{}'.format(m, prefix), metrics[m], global_step)
+
+
 
 def main(config):
 
@@ -76,8 +105,10 @@ def main(config):
 
     dataset = MyOwnDataset(root=config.train_data_dir, directory=config.train_data_dir,
                            transform=transform)
+    valid_dataset = MyOwnDataset(root=config.valid_data_dir, directory=config.valid_data_dir, transform=transform)
     loader = DataLoader(dataset, batch_size=config.bs_train)
-
+    valid_loader = DataLoader(valid_dataset, batch_size=config.bs_eval)
+    me = Metrics()
     model = VGAE2(VariationalEncoder(config))
     model = model.to(C.DEVICE)
     experiment_id = int(time.time())
@@ -116,10 +147,10 @@ def main(config):
         for i, abatch in tqdm(enumerate(loader)):
             print(f'Batch is in device {abatch.device}')
             start = time.time()
-            optimizer.zero_grad()
+            #optimizer.zero_grad()
 
             train_data, val_data, test_data = abatch
-            train_losses = train(model)
+            train_losses = train(model, optimizer, abatch)
 
             elapsed = time.time() - start
             #losses.append(loss)
@@ -136,107 +167,48 @@ def main(config):
                 print('[TRAIN {:0>5d} | {:0>3d}] {} elapsed: {:.3f} secs'.format(
                     i + 1, epoch + 1, loss_string, elapsed))
 
-            with open(os.path.join('/home/csolis/losses', f'losses_{model_name}.pkl'), 'ab') as f:
-                pickle.dump(losses, f)
+            if global_step % (config.eval_every - 1) == 0:
+                # Evaluate on validation.
+                start = time.time()
+                model.eval()
+                valid_losses = test(model, valid_loader, me)
+                valid_metrics = me.get_final_metrics()
+                elapsed = time.time() - start
+
+                # Log to console.
+                loss_string = ' '.join(['{}: {:.6f}'.format(k, valid_losses[k]) for k in valid_losses])
+                print('[VALID {:0>5d} | {:0>3d}] {} elapsed: {:.3f} secs'.format(
+                    i + 1, epoch + 1, loss_string, elapsed))
+                s = "Eval metrics: \n"
+                for m in sorted(valid_metrics):
+                    val = np.sum(valid_metrics[m])
+                    s += "   {}: {:.3f}".format(m, val)
+
+                print('[VALID {:0>5d} | {:0>3d}] {}'.format(i + 1, epoch + 1, s))
+
+                # Log to tensorboard.
+                to_tensorboard_log(valid_losses, writer, global_step, 'valid')
+                to_tensorboard_log(valid_metrics, writer, global_step, 'valid')
+
+            #with open(os.path.join('/home/csolis/losses', f'losses_{model_name}.pkl'), 'ab') as f:
+             #   pickle.dump(losses, f)
             # print(f'Loss: {loss:.4f}')
-            if i % args.validation_steps == 0:
+            #if i % args.validation_steps == 0:
                 # print(loss)
-                auc, ap = test(test_data)
-                aucs.append(auc)
-                with open(os.path.join('/home/csolis/auc', f'auc_{model_name}.pkl'), 'ab') as f:
-                    pickle.dump(aucs, f)
-                writer.add_scalar('AUC/train/test', auc, it)
+             #   auc, ap = test(test_data)
+              #  aucs.append(auc)
+               # with open(os.path.join('/home/csolis/auc', f'auc_{model_name}.pkl'), 'ab') as f:
+                 #   pickle.dump(aucs, f)
+                #writer.add_scalar('AUC/train/test', auc, it)
                 # print(f'Iteration: {i:03d}, AUC: {auc:.4f}, AP: {ap:.4f}')
-        print(f'Loss of epochs last iteration: {loss}')
+        #print(f'Loss of epochs last iteration: {loss}')
     print('Finished training.')
-    print('Saving losses to dir')
+    #print('Saving losses to dir')
 
 
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--num_layers', type=int, default=2)
-    parser.add_argument('--validation_steps', type=int, default=100)
-    parser.add_argument('--default_cfg_path', default='/home/csolis/cfgs/default_config.yaml')
-    args = parser.parse_args()
-    print(f'Arguments:\n {args}')
-
-    writer = SummaryWriter()
-
-    config = load_config(args.default_cfg_path)
-    print(f'config is {config}')
-    #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f'Device is {C.DEVICE}')
-    transform = T.Compose([
-        T.NormalizeFeatures(),
-        T.ToDevice(C.DEVICE),
-        T.RandomLinkSplit(num_val=0.05, num_test=0.1, is_undirected=True,
-                          split_labels=True, add_negative_train_samples=False),
-    ])
-    dataset = MyOwnDataset(root=config['data']['train_data_dir'], directory=config['data']['train_data_dir'], transform=transform)
-    loader = DataLoader(dataset, batch_size=config['train']['batch_size'])
-    model_name = config.model_name
-
-    in_channels, out_channels = dataset.num_features, config['model']['layers']['output_layer']
-    kwargs = {'dropout': config['model']['dropout'], 'num_layers': args.num_layers}
-    #model = VGAE(VariationalEncoder(config))
-
-
-    #model = model.to(C.DEVICE)
-    optim_name = config['optimizer']['name']
-    if optim_name == 'sgd':
-        print('using sgd')
-        optimizer = torch.optim.SGD(model.parameters(),
-                                    lr=config['optimizer']['lr'],
-                                    weight_decay=config['optimizer']['weight_decay'],
-                                    momentum=config['optimizer']['momentum'],
-                                    nesterov=config['optimizer']['nesterov'])
-    elif optim_name == 'adam':
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
-    losses = []
-    aucs = []
-    it = 0
-    for epoch in range(1, config['train']['epochs'] + 1):
-        print(f'Epoch: {epoch:03d}')
-        for i, data in tqdm(enumerate(loader)):
-            train_data, val_data, test_data = data
-            it += 1
-            loss = train()
-            losses.append(loss)
-            writer.add_scalar('Loss/train', loss, it)
-            with open(os.path.join('/home/csolis/losses', f'losses_{model_name}.pkl'), 'ab') as f:
-                pickle.dump(losses, f)
-            #print(f'Loss: {loss:.4f}')
-            if i % args.validation_steps == 0:
-                #print(loss)
-                auc, ap = test(test_data)
-                aucs.append(auc)
-                with open(os.path.join('/home/csolis/auc', f'auc_{model_name}.pkl'), 'ab') as f:
-                    pickle.dump(aucs, f)
-                writer.add_scalar('AUC/train/test', auc, it)
-                #print(f'Iteration: {i:03d}, AUC: {auc:.4f}, AP: {ap:.4f}')
-        print(f'Loss of epochs last iteration: {loss}')
-    print('Finished training.')
-    print('Saving losses to dir')
-
-
-
-    # get final embeddings
-    transform_test = T.Compose([
-        T.NormalizeFeatures(),
-        T.ToDevice(device),
-    ])
-    dataset_test = MyOwnDataset(root=args.dir_test_data, transform=transform_test)
-    loader = DataLoader(dataset_test, batch_size=args.batch_size)
-    model.eval()
-    if os.path.exists(args.save_embeddings_dir) and os.path.isdir(args.save_embeddings_dir):
-        shutil.rmtree(args.save_embeddings_dir)
-        os.mkdir(args.save_embedding_dir)
-
-    for i, data in enumerate(loader):
-        z = model.encode(data.x, data.edge_index)
-        torch.save(z, os.path.join(args.save_embeddings_dir, f'{args.encoder_type}', f'emb_{i:03d}.pt'))
     main(Configuration.parse_cmd())
 
 
