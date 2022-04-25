@@ -58,16 +58,23 @@ from torch_geometric.data import InMemoryDataset, download_url
 
 class MyOwnDataset(InMemoryDataset):
     def __init__(self, root, directory, transform=None, pre_transform=None, pre_filter=None):
+        self.raw_file_names = directory
         super().__init__(root, transform, pre_transform, pre_filter)
         self.data, self.slices = torch.load(self.processed_paths[0])
         self.dir = directory
         #self.file_dir = file_dir
 
     @property
-    def raw_file_names(self):
-        return os.listdir('/home/csolis/data/pyg_datasets/train/raw')
+    def raw_file_names(self, type='train'):
+        return self.__raw_file_names
+        #if type == 'train':
+        #    return os.listdir('/home/csolis/data/pyg_datasets/train/raw')
+        #elif type == 'valid':
+        #    return os.listdir('/home/csolis/data/pyg_datasets/valid/raw')
 
-
+    @raw_file_names.setter
+    def raw_file_names(self, value):
+        self.__raw_file_names = value
     @property
     def processed_file_names(self):
         return [f'data_{i}.pt' for i in range(len(self.raw_paths))]
