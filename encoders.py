@@ -117,3 +117,15 @@ class VGAE2(VGAE):
         """A summary string of this model. Override this if desired."""
         return '{}-{}'.format(self.__class__.__name__, self.config.tag)
 
+    def test(self, z, pos_edge_index, neg_edge_index):
+        pos_y = z.new_ones(pos_edge_index.size(1))
+        neg_y = z.new_zeros(neg_edge_index.size(1))
+        y = torch.cat([pos_y, neg_y], dim=0)
+
+        pos_pred = self.decoder(z, pos_edge_index, sigmoid=True)
+        neg_pred = self.decoder(z, neg_edge_index, sigmoid=True)
+        pred = torch.cat([pos_pred, neg_pred], dim=0)
+
+        y, pred = y.detach().cpu().numpy(), pred.detach().cpu().numpy()
+        return y, pred
+
