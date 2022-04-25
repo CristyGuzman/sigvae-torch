@@ -12,7 +12,7 @@ from torch_geometric.loader import DataLoader
 from encoders import VariationalEncoder, VGAE2
 import yaml
 from torch.utils.tensorboard import SummaryWriter
-from configuration import Constants as C
+from configuration import CONSTANTS as C
 from configuration import Configuration
 import time
 from torch import nn

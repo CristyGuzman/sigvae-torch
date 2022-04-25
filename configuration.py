@@ -28,7 +28,7 @@ class Constants(object):
 
     def __setattr__(self, key, value):
         return setattr(self.instance, key, value)
-
+CONSTANTS = Constants()
 
 class Configuration(object):
     """Configuration parameters modified via command line"""
