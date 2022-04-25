@@ -111,6 +111,8 @@ def main(config):
     loader = DataLoader(dataset, batch_size=config.bs_train)
     valid_loader = DataLoader(valid_dataset, batch_size=config.bs_eval)
     me = Metrics()
+    if config.input_size is None:
+        config.input_size = dataset.num_features
     model = VGAE2(VariationalEncoder(config))
     model = model.to(C.DEVICE)
     experiment_id = int(time.time())
