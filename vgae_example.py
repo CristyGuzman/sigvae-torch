@@ -58,12 +58,12 @@ def test(model, data, metrics_engine):
     n_samples = 0
     #model.eval()
     for i, abatch in tqdm(enumerate(data)):
-        _, valid_data,_ = abatch
+        _, valid_data, _ = abatch
         z = model.encode(valid_data.x, valid_data.edge_index)
-        losses = get_losses(model, z, data)
+        losses = get_losses(model, z, valid_data)
         for k in losses:
             loss_vals_agg += losses[k]*valid_data.batch_size
-        targets, preds = model.test(z, data.pos_edge_label_index, data.neg_edge_label_index)
+        targets, preds = model.test(z, valid_data.pos_edge_label_index, valid_data.neg_edge_label_index)
         metrics_engine.compute_and_aggregate(preds, targets)
         n_samples += valid_data.batch_size
 
