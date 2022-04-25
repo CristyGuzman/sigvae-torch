@@ -155,7 +155,7 @@ def main(config):
             #optimizer.zero_grad()
 
             train_data, val_data, test_data = abatch
-            print(f'Batch is in device {train_data.device}')
+            #print(f'Batch is in device {train_data.device}')
             train_losses = train(model, optimizer, train_data)
 
             elapsed = time.time() - start
