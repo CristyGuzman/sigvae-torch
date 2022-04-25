@@ -58,7 +58,7 @@ from torch_geometric.data import InMemoryDataset, download_url
 
 class MyOwnDataset(InMemoryDataset):
     def __init__(self, root, directory, transform=None, pre_transform=None, pre_filter=None):
-        self.raw_file_names = directory
+        self.raw_file_names = os.listdir(os.path.join(directory, 'raw'))
         super().__init__(root, transform, pre_transform, pre_filter)
         self.data, self.slices = torch.load(self.processed_paths[0])
         self.dir = directory
