@@ -41,6 +41,7 @@ class Configuration(object):
 
         #Data
         parser.add_argument('--train_data_dir', default='/home/csolis/data/pyg_datasets/train')
+        parser.add_argument('--valid_data_dir', default='/home/csolis/data/pyg_datasets/valid')
 
         # Learning configurations.
         parser.add_argument('--lr', type=float, default=5.0e-4, help='Learning rate.')
