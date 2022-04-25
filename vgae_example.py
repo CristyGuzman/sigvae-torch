@@ -94,7 +94,8 @@ def to_tensorboard_log(metrics, writer, global_step, prefix=''):
 
 def main(config):
 
-
+    print(C)
+    device = C.DEVICE
 
     transform = T.Compose([
         T.NormalizeFeatures(),
