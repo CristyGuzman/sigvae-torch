@@ -103,9 +103,10 @@ def main(config):
         T.RandomLinkSplit(num_val=0.05, num_test=0.1, is_undirected=True,
                           split_labels=True, add_negative_train_samples=False),
     ])
-
+    print('Creating training dataset')
     dataset = MyOwnDataset(root=config.train_data_dir, directory=config.train_data_dir,
                            transform=transform)
+    print('Creating validation dataset')
     valid_dataset = MyOwnDataset(root=config.valid_data_dir, directory=config.valid_data_dir, transform=transform)
     loader = DataLoader(dataset, batch_size=config.bs_train)
     valid_loader = DataLoader(valid_dataset, batch_size=config.bs_eval)
