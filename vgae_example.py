@@ -5,6 +5,7 @@ import pickle
 import shutil
 from data import MyOwnDataset
 import torch
+import torch.optim as optim
 from tqdm import tqdm
 import torch_geometric.transforms as T
 from torch_geometric.loader import DataLoader
@@ -139,9 +140,9 @@ def main(config):
         optimizer = torch.optim.Adam(model.parameters(), lr=config.lr, weight_decay=config.lr_decay)
 
     if config.scheduler == 'reduce_plateau':
-        scheduler = optimizer.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.99, patience=5, verbose=False)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.99, patience=5, verbose=False)
     elif config.scheduler == 'step':
-        scheduler = optimizer.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.99)
+        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.99)
     else:
         raise NotImplementedError
 
@@ -193,6 +194,8 @@ def main(config):
                 # Log to tensorboard.
                 to_tensorboard_log(valid_losses, writer, global_step, 'valid')
                 to_tensorboard_log(valid_metrics, writer, global_step, 'valid')
+            global_step += 1
+        scheduler.step(epoch)
 
             #with open(os.path.join('/home/csolis/losses', f'losses_{model_name}.pkl'), 'ab') as f:
              #   pickle.dump(losses, f)
