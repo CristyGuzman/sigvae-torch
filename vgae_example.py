@@ -59,6 +59,7 @@ def test(model, data, metrics_engine):
     #model.eval()
     for i, abatch in tqdm(enumerate(data)):
         _, valid_data, _ = abatch
+        print(f"shape is {valid_data.shape}")
         z = model.encode(valid_data.x, valid_data.edge_index)
         _, losses = get_losses(model, z, valid_data)
         for k in losses:
