@@ -16,6 +16,18 @@ class Constants(object):
             self.DATA_DIR = os.environ['DATA']
             self.EXPERIMENT_DIR = os.environ['THESIS_EXPERIMENTS']
 
+    instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not Constants.instance:
+            Constants.instance = Constants.__Constants()
+        return Constants.instance
+
+    def __getattr__(self, item):
+        return getattr(self.instance, item)
+
+    def __setattr__(self, key, value):
+        return setattr(self.instance, key, value)
 
 
 class Configuration(object):
