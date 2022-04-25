@@ -34,7 +34,6 @@ def load_config(config_path):
 def get_losses(model, z, data):
     recon_loss = model.recon_loss(z, data.pos_edge_label_index)
     kl_loss = model.kl_loss(model.__mu__, model.__logstd__)
-    print(kl_loss)
     loss = recon_loss + (1 / data.num_nodes) * kl_loss
     return loss, {'total_loss': float(loss), 'recon_loss': float(recon_loss), 'kl_loss': float(kl_loss)}
 
@@ -96,8 +95,6 @@ def to_tensorboard_log(metrics, writer, global_step, prefix=''):
 
 def main(config):
 
-    print(C)
-    device = C.DEVICE
 
     transform = T.Compose([
         T.NormalizeFeatures(),

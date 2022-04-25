@@ -45,7 +45,6 @@ class Metrics(object):
         else:
             ps = predictions
             ts = targets
-        print(f"predictions and targets are: {(ps, ts)}")
         new_metrics = self.compute(ps, ts)
         self.aggregate(new_metrics)
 
