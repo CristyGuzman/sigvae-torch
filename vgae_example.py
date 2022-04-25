@@ -62,7 +62,7 @@ def test(model, data, metrics_engine):
         z = model.encode(valid_data.x, valid_data.edge_index)
         _, losses = get_losses(model, z, valid_data)
         for k in losses:
-            loss_vals_agg += losses[k]*data.batch_size
+            loss_vals_agg[k] += losses[k]*data.batch_size
         targets, preds = model.test(z, valid_data.pos_edge_label_index, valid_data.neg_edge_label_index)
         metrics_engine.compute_and_aggregate(preds, targets)
         n_samples += data.batch_size
