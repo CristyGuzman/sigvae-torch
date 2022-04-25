@@ -63,10 +63,10 @@ def test(model, data, metrics_engine):
         z = model.encode(valid_data.x, valid_data.edge_index)
         _, losses = get_losses(model, z, valid_data)
         for k in losses:
-            loss_vals_agg += losses[k]*valid_data.batch_size
+            loss_vals_agg += losses[k]*data.batch_size
         targets, preds = model.test(z, valid_data.pos_edge_label_index, valid_data.neg_edge_label_index)
         metrics_engine.compute_and_aggregate(preds, targets)
-        n_samples += valid_data.batch_size
+        n_samples += data.batch_size
 
     for k in loss_vals_agg:
         loss_vals_agg[k] /= n_samples
@@ -113,7 +113,6 @@ def main(config):
     valid_dataset = MyOwnDataset(root=config.valid_data_dir, directory=config.valid_data_dir, transform=transform)
     loader = DataLoader(dataset, batch_size=config.bs_train)
     valid_loader = DataLoader(valid_dataset, batch_size=config.bs_eval)
-    print(f"next iter is {next(iter(valid_loader))}")
     me = Metrics()
     if config.input_size is None:
         config.input_size = dataset.num_features
