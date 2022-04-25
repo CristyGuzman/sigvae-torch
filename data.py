@@ -65,7 +65,7 @@ class MyOwnDataset(InMemoryDataset):
         #self.file_dir = file_dir
 
     @property
-    def raw_file_names(self, type='train'):
+    def raw_file_names(self):
         return self.__raw_file_names
         #if type == 'train':
         #    return os.listdir('/home/csolis/data/pyg_datasets/train/raw')
