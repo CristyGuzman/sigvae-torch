@@ -4,6 +4,7 @@ from torch_geometric.utils import train_test_split_edges
 from torch_geometric.nn import GINConv, global_add_pool, GATConv
 import torch.nn.functional as F
 from torch.nn import BatchNorm1d, Linear, ReLU, Sequential
+from torch_geometric.nn.models.autoencoder import VGAE
 
 
 class GCNEncoder(torch.nn.Module):
@@ -73,35 +74,46 @@ class GATEncoder(torch.nn.Module):
 
 
 class VariationalEncoder(torch.nn.Module):
-    def __init__(self, in_channels, out_channels, encoder_type, **kwargs):
+    def __init__(self, config):
         super().__init__()
-        self.encoder_type = encoder_type
+        self.config = config
+        self.encoder_type = config.encoder_type
+        self.in_channels = config.input_size
+        self.out_channels = config.out_size
         if self.encoder_type == 'gcn':
-            self.conv1 = GCNConv(in_channels, 2 * out_channels)
-            self.conv_mu = GCNConv(2 * out_channels, out_channels)
-            self.conv_logstd = GCNConv(2 * out_channels, out_channels)
+            self.conv1 = GCNConv(self.in_channels, 2 * self.out_channels)
+            self.conv_mu = GCNConv(2 * self.out_channels, self.out_channels)
+            self.conv_logstd = GCNConv(2 * self.out_channels, self.out_channels)
         elif self.encoder_type == 'gin':
-            if 'num_layers' not in kwargs:
+            if config.num_layers is None:
                 raise ValueError('Number of layers were not provided')
             else:
-                self.num_layers = kwargs['num_layers']
-            self.conv1 = GINEncoder(self.num_layers, in_channels, 2 * out_channels, 2 * out_channels)
-            self.conv_mu = GINEncoder(1, 2 * out_channels, 2 * out_channels, out_channels)
-            self.conv_logstd = GINEncoder(1, 2 * out_channels, out_channels, out_channels)
+                self.num_layers = config.num_layers
+            self.conv1 = GINEncoder(self.num_layers, self.in_channels, 2 * self.out_channels, 2 * self.out_channels)
+            self.conv_mu = GINEncoder(1, 2 * self.out_channels, 2 * self.out_channels, self.out_channels)
+            self.conv_logstd = GINEncoder(1, 2 * self.out_channels, self.out_channels, self.out_channels)
         elif self.encoder_type == 'gat':
-            if 'dropout' not in kwargs:
+            if config.dropout is None:
                 raise ValueError('Dropout not provided')
             else:
-                self.dropout = kwargs['dropout']
-            self.conv1 = GATEncoder(in_channels=in_channels, hid_channels=2*out_channels, heads=5, out_channels=2*out_channels, dropout=self.dropout)
-            self.conv_mu = GATEncoder(in_channels=2*out_channels, hid_channels=2*out_channels, heads=5,
-                                   out_channels=out_channels, dropout=self.dropout)
-            self.conv_logstd = GATEncoder(in_channels=2 * out_channels, hid_channels=2 * out_channels, heads=5,
-                                      out_channels=out_channels, dropout=self.dropout)
+                self.dropout = config.dropout
+            self.conv1 = GATEncoder(in_channels=self.in_channels, hid_channels=2*self.out_channels, heads=5, out_channels=2*self.out_channels, dropout=self.dropout)
+            self.conv_mu = GATEncoder(in_channels=2*self.out_channels, hid_channels=2*self.out_channels, heads=5,
+                                   out_channels=self.out_channels, dropout=self.dropout)
+            self.conv_logstd = GATEncoder(in_channels=2 * self.out_channels, hid_channels=2 * self.out_channels, heads=5,
+                                      out_channels=self.out_channels, dropout=self.dropout)
 
     def forward(self, x, edge_index):
         x = self.conv1(x, edge_index).relu()
         return self.conv_mu(x, edge_index), self.conv_logstd(x, edge_index)
 
 
+class VGAE2(VGAE):
+    def __init__(self, config, encoder, decoder=None):
+        super(VGAE2, self).__init__(encoder, decoder)
+        self.config = config
+
+    def model_name(self):
+        """A summary string of this model. Override this if desired."""
+        return '{}-{}'.format(self.__class__.__name__, self.config.tag)
 
