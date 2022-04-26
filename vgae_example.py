@@ -32,7 +32,7 @@ def load_config(config_path):
 
 
 def get_losses(model, z, data):
-    recon_loss = model.recon_loss(z, data.pos_edge_label_index)
+    recon_loss = model.recon_loss(z, data.pos_edge_label_index, data.neg_edge_label_index)
     kl_loss = model.kl_loss(model.__mu__, model.__logstd__)
     loss = recon_loss + (1 / data.num_nodes) * kl_loss
     return loss, {'total_loss': float(loss), 'recon_loss': float(recon_loss), 'kl_loss': float(kl_loss)}
@@ -103,7 +103,7 @@ def main(config):
         T.NormalizeFeatures(),
         T.ToDevice(C.DEVICE),
         T.RandomLinkSplit(num_val=0.05, num_test=0.1, is_undirected=True,
-                          split_labels=True, add_negative_train_samples=False),
+                          split_labels=True, add_negative_train_samples=True),
     ])
     print('Creating training dataset')
     dataset = MyOwnDataset(root=config.train_data_dir, directory=config.train_data_dir,
