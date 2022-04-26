@@ -170,74 +170,93 @@ def main(config):
     #training loop
     global_step = 0
     for epoch in range(config.n_epochs):
-        for i, abatch in tqdm(enumerate(loader)):
-
+        train_data, val_data, test_data = data
+        start = time.time()
+        train_losses = train(model, optimizer, train_data, config.kl)
+        elapsed = time.time() - start
+        for k in train_losses:
+            prefix = '{}/{}'.format(k, 'train')
+            writer.add_scalar(prefix, train_losses[k], global_step)
+        writer.add_scalar("lr", optimizer.state_dict()['param_groups'][0]['lr'], global_step)
+        if global_step % (config.eval_every - 1) == 0:
+            # Evaluate on validation.
             start = time.time()
-            #optimizer.zero_grad()
-
-            train_data, val_data, test_data = abatch
-            #print(f'Batch is in device {train_data.device}')
-            train_losses = train(model, optimizer, train_data, config.kl)
-
+            model.eval()
+            # valid_losses = test(model, loader, me, return_loss=True, kl=config.kl)
+            # valid_metrics = me.get_final_metrics()
+            valid_metrics = test_batch(model, train_data, val_data, me)
             elapsed = time.time() - start
-            #losses.append(loss)
+            to_tensorboard_log(valid_metrics, writer, global_step, 'train_valid')
+        if not config.cora:
+            for i, abatch in tqdm(enumerate(loader)):
 
-            #writer.add_scalar('Loss/train', loss, global_step)
-            for k in train_losses:
-                prefix = '{}/{}'.format(k, 'train')
-                writer.add_scalar(prefix, train_losses[k], global_step)
-
-            writer.add_scalar("lr", optimizer.state_dict()['param_groups'][0]['lr'], global_step)
-
-            if global_step % (config.print_every - 1) == 0:
-                loss_string = ' '.join(['{}: {:.6f}'.format(k, train_losses[k]) for k in train_losses])
-                print('[TRAIN {:0>5d} | {:0>3d}] {} elapsed: {:.3f} secs'.format(
-                    i + 1, epoch + 1, loss_string, elapsed))
-
-            if global_step % (config.eval_every - 1) == 0:
-                # Evaluate on validation.
                 start = time.time()
-                model.eval()
-                #valid_losses = test(model, loader, me, return_loss=True, kl=config.kl)
-                #valid_metrics = me.get_final_metrics()
-                valid_metrics = test_batch(model, train_data, val_data, me)
+                #optimizer.zero_grad()
+
+                train_data, val_data, test_data = abatch
+                #print(f'Batch is in device {train_data.device}')
+                train_losses = train(model, optimizer, train_data, config.kl)
+
                 elapsed = time.time() - start
+                #losses.append(loss)
 
-                # Log to console.
-                #loss_string = ' '.join(['{}: {:.6f}'.format(k, valid_losses[k]) for k in valid_losses])
-                #print('[VALID {:0>5d} | {:0>3d}] {} elapsed: {:.3f} secs'.format(
-                #    i + 1, epoch + 1, loss_string, elapsed))
-                s = "Eval metrics on validation set: \n"
-                for m in sorted(valid_metrics):
-                    val = np.sum(valid_metrics[m])
-                    s += "   {}: {:.3f}".format(m, val)
+                #writer.add_scalar('Loss/train', loss, global_step)
+                for k in train_losses:
+                    prefix = '{}/{}'.format(k, 'train')
+                    writer.add_scalar(prefix, train_losses[k], global_step)
 
-                print('[VALID {:0>5d} | {:0>3d}] {} elapsed; {: .3f} secs '.format(i + 1, epoch + 1, s, elapsed))
+                writer.add_scalar("lr", optimizer.state_dict()['param_groups'][0]['lr'], global_step)
 
-                # Log to tensorboard.
+                if global_step % (config.print_every - 1) == 0:
+                    loss_string = ' '.join(['{}: {:.6f}'.format(k, train_losses[k]) for k in train_losses])
+                    print('[TRAIN {:0>5d} | {:0>3d}] {} elapsed: {:.3f} secs'.format(
+                        i + 1, epoch + 1, loss_string, elapsed))
 
-                #validation data
-                #to_tensorboard_log(valid_losses, writer, global_step, 'train_valid')
-                to_tensorboard_log(valid_metrics, writer, global_step, 'train_valid')
+                if global_step % (config.eval_every - 1) == 0:
+                    # Evaluate on validation.
+                    start = time.time()
+                    model.eval()
+                    #valid_losses = test(model, loader, me, return_loss=True, kl=config.kl)
+                    #valid_metrics = me.get_final_metrics()
+                    valid_metrics = test_batch(model, train_data, val_data, me)
+                    elapsed = time.time() - start
 
-                #Evaluate on train data
-                # start = time.time()
-                # model.eval()
-                # me.reset()
-                # test(model, loader, me, return_loss=False, kl=config.kl)
-                # train_metrics = me.get_final_metrics()
-                # elapsed = time.time() - start
-                #
-                # s = "Eval metrics on training set: \n"
-                # for m in sorted(train_metrics):
-                #     trn = np.sum(train_metrics[m])
-                #     s += "   {}: {:.3f}".format(m, trn)
-                #
-                # print('[TRAIN_EVAL {:0>5d} | {:0>3d}] {} elapsed: {:.3f} secs'.format(i + 1, epoch + 1, s, elapsed))
+                    # Log to console.
+                    #loss_string = ' '.join(['{}: {:.6f}'.format(k, valid_losses[k]) for k in valid_losses])
+                    #print('[VALID {:0>5d} | {:0>3d}] {} elapsed: {:.3f} secs'.format(
+                    #    i + 1, epoch + 1, loss_string, elapsed))
+                    s = "Eval metrics on validation set: \n"
+                    for m in sorted(valid_metrics):
+                        val = np.sum(valid_metrics[m])
+                        s += "   {}: {:.3f}".format(m, val)
 
-                # train data
-                # to_tensorboard_log(train_metrics, writer, global_step, 'train')
-            global_step += 1
+                    print('[VALID {:0>5d} | {:0>3d}] {} elapsed; {: .3f} secs '.format(i + 1, epoch + 1, s, elapsed))
+
+                    # Log to tensorboard.
+
+                    #validation data
+                    #to_tensorboard_log(valid_losses, writer, global_step, 'train_valid')
+                    to_tensorboard_log(valid_metrics, writer, global_step, 'train_valid')
+
+                    #Evaluate on train data
+                    # start = time.time()
+                    # model.eval()
+                    # me.reset()
+                    # test(model, loader, me, return_loss=False, kl=config.kl)
+                    # train_metrics = me.get_final_metrics()
+                    # elapsed = time.time() - start
+                    #
+                    # s = "Eval metrics on training set: \n"
+                    # for m in sorted(train_metrics):
+                    #     trn = np.sum(train_metrics[m])
+                    #     s += "   {}: {:.3f}".format(m, trn)
+                    #
+                    # print('[TRAIN_EVAL {:0>5d} | {:0>3d}] {} elapsed: {:.3f} secs'.format(i + 1, epoch + 1, s, elapsed))
+
+                    # train data
+                    # to_tensorboard_log(train_metrics, writer, global_step, 'train')
+                global_step += 1
+        global_step += 1
         scheduler.step(epoch)
 
             #with open(os.path.join('/home/csolis/losses', f'losses_{model_name}.pkl'), 'ab') as f:
