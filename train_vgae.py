@@ -21,8 +21,6 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 args = parse_args()
 
-model = DeepVGAE(args).to(device)
-optimizer = Adam(model.parameters(), lr=args.lr)
 
 os.makedirs("datasets", exist_ok=True)
 transform = T.Compose([
@@ -37,6 +35,15 @@ transform = T.Compose([
 print('Creating training dataset')
 dataset = MyOwnDataset(root=args.train_data_dir, directory=args.train_data_dir,transform=transform)
 loader = DataLoader(dataset, batch_size=args.bs_train)
+
+args.enc_in_channels = dataset.num_features
+print(f'Args are: {args}')
+print(args.enc_in_channels)
+
+model = DeepVGAE(args).to(device)
+optimizer = Adam(model.parameters(), lr=args.lr)
+
+
 
 #train_data, valid_data, test_data = data
 
