@@ -57,7 +57,9 @@ def test(model, data, metrics_engine, return_loss=True):
     n_samples = 0
     #model.eval()
     for i, abatch in tqdm(enumerate(data)):
-        valid_data, _, _ = abatch
+        print(f"Printing batch: {abatch}")
+        valid_data, v_dat, _ = abatch
+        print(f"Printing: {valid_data, v_dat}")
         z = model.encode(valid_data.x, valid_data.edge_index)
         _, losses = get_losses(model, z, valid_data)
         for k in losses:
