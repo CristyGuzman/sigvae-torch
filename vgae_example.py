@@ -184,7 +184,7 @@ def main(config):
                 # Evaluate on validation.
                 start = time.time()
                 model.eval()
-                valid_losses = test(model, valid_loader, me, config.kl)
+                valid_losses = test(model, valid_loader, me, return_loss=True, kl=config.kl)
                 valid_metrics = me.get_final_metrics()
                 elapsed = time.time() - start
 
