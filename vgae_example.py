@@ -47,7 +47,7 @@ def train(model, optimizer, data):
     #kl_loss = model.kl_loss
     #loss = recon_loss + (1 / train_data.num_nodes) * kl_loss
     loss.backward()
-    nn.utils.clip_grad_norm(model.parameters(), max_norm=1)
+    nn.utils.clip_grad_norm_(model.parameters(), max_norm=1)
     optimizer.step()
     return losses
 
