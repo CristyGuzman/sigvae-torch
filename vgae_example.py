@@ -31,18 +31,23 @@ def load_config(config_path):
 
 
 
-def get_losses(model, z, data):
+def get_losses(model, z, data, kl=True):
     recon_loss = model.recon_loss(z, data.pos_edge_label_index, data.neg_edge_label_index)
     kl_loss = model.kl_loss(model.__mu__, model.__logstd__)
-    loss = recon_loss + (1 / data.num_nodes) * kl_loss
-    return loss, {'total_loss': float(loss), 'recon_loss': float(recon_loss), 'kl_loss': float(kl_loss)}
+    if kl:
+        loss = recon_loss + (1 / data.num_nodes) * kl_loss
+        return loss, {'total_loss': float(loss), 'recon_loss': float(recon_loss), 'kl_loss': float(kl_loss)}
+    else:
+        loss = recon_loss
+        return loss, {'total_loss': float(loss), 'recon_loss': float(recon_loss)}
 
-def train(model, optimizer, data):
+
+def train(model, optimizer, data, kl=True):
     model.train()
     optimizer.zero_grad()
     z = model.encode(data.x, data.edge_index)
     #recon_loss = model.recon_loss(z, data.pos_edge_label_index)
-    loss, losses = get_losses(model, z, data)
+    loss, losses = get_losses(model, z, data, kl)
     #loss = losses['total_loss']
     #kl_loss = model.kl_loss
     #loss = recon_loss + (1 / train_data.num_nodes) * kl_loss
@@ -52,7 +57,7 @@ def train(model, optimizer, data):
     return losses
 
 @torch.no_grad()
-def test(model, data, metrics_engine, return_loss=True):
+def test(model, data, metrics_engine, return_loss=True, kl=True):
     loss_vals_agg = collections.defaultdict(float)
     n_samples = 0
     #model.eval()
@@ -61,7 +66,7 @@ def test(model, data, metrics_engine, return_loss=True):
         valid_data, v_dat, _ = abatch
         #print(f"Printing: {valid_data, v_dat}")
         z = model.encode(valid_data.x, valid_data.edge_index)
-        _, losses = get_losses(model, z, valid_data)
+        _, losses = get_losses(model, z, valid_data, kl)
         for k in losses:
             loss_vals_agg[k] += losses[k]*data.batch_size
         targets, preds = model.test(z, valid_data.pos_edge_label_index, valid_data.neg_edge_label_index)
@@ -157,7 +162,7 @@ def main(config):
 
             train_data, val_data, test_data = abatch
             #print(f'Batch is in device {train_data.device}')
-            train_losses = train(model, optimizer, train_data)
+            train_losses = train(model, optimizer, train_data, config.kl)
 
             elapsed = time.time() - start
             #losses.append(loss)
@@ -178,7 +183,7 @@ def main(config):
                 # Evaluate on validation.
                 start = time.time()
                 model.eval()
-                valid_losses = test(model, valid_loader, me)
+                valid_losses = test(model, valid_loader, me, config.kl)
                 valid_metrics = me.get_final_metrics()
                 elapsed = time.time() - start
 
@@ -203,7 +208,7 @@ def main(config):
                 start = time.time()
                 model.eval()
                 me.reset()
-                test(model, loader, me, return_loss=False)
+                test(model, loader, me, return_loss=False, kl=config.kl)
                 train_metrics = me.get_final_metrics()
                 elapsed = time.time() - start
 
