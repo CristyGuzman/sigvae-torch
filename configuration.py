@@ -52,6 +52,7 @@ class Configuration(object):
         parser.add_argument('--new_model', type=bool, default=True)
 
         #Data
+        parser.add_argument('--cora', default=False, action='store_true')
         parser.add_argument('--train_data_dir', default='/home/csolis/data/pyg_datasets/train')
         parser.add_argument('--valid_data_dir', default='/home/csolis/data/pyg_datasets/val')
 
