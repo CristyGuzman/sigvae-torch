@@ -123,13 +123,15 @@ def main(config):
     if config.cora:
         dataset = Planetoid(config.train_data_dir, "Cora", transform=transform)
         data = dataset[0].to(C.DEVICE)
-    print('Creating training dataset')
-    dataset = MyOwnDataset(root=config.train_data_dir, directory=config.train_data_dir,
-                           transform=transform)
-    print('Creating validation dataset')
-    valid_dataset = MyOwnDataset(root=config.valid_data_dir, directory=config.valid_data_dir, transform=transform)
-    loader = DataLoader(dataset, batch_size=config.bs_train)
-    valid_loader = DataLoader(valid_dataset, batch_size=config.bs_eval)
+        print(data)
+    else:
+        print('Creating training dataset')
+        dataset = MyOwnDataset(root=config.train_data_dir, directory=config.train_data_dir,
+                               transform=transform)
+        print('Creating validation dataset')
+        valid_dataset = MyOwnDataset(root=config.valid_data_dir, directory=config.valid_data_dir, transform=transform)
+        loader = DataLoader(dataset, batch_size=config.bs_train)
+        valid_loader = DataLoader(valid_dataset, batch_size=config.bs_eval)
     me = Metrics()
     if config.input_size is None:
         config.input_size = dataset.num_features
