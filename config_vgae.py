@@ -26,6 +26,7 @@ def parse_args():
                         help='The yaml configuration file')
     parser.add_argument('--train_data_dir', type=str, default='/home/csolis/data/pyg_datasets/train')
     parser.add_argument('--bs_train', type=int, default=32)
+    parser.add_argument('--n_epochs', type=int, default=400)
     args, unprocessed_args = parser.parse_known_args()
 
     # parser.add_argument('--data_root', default=None, required=True, help='The data folder')
