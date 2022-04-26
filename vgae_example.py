@@ -122,7 +122,7 @@ def main(config):
     ])
     if config.cora:
         dataset = Planetoid(config.train_data_dir, "Cora", transform=transform)
-        data = dataset[0].to(C.DEVICE)
+        data = dataset[0]
         print(data)
     else:
         print('Creating training dataset')
