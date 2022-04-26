@@ -33,8 +33,9 @@ def load_config(config_path):
 
 def get_losses(model, z, data, kl=True):
     recon_loss = model.recon_loss(z, data.pos_edge_label_index, data.neg_edge_label_index)
-    kl_loss = model.kl_loss(model.__mu__, model.__logstd__)
     if kl:
+        print('Adding kl term to loss')
+        kl_loss = model.kl_loss(model.__mu__, model.__logstd__)
         loss = recon_loss + (1 / data.num_nodes) * kl_loss
         return loss, {'total_loss': float(loss), 'recon_loss': float(recon_loss), 'kl_loss': float(kl_loss)}
     else:
@@ -103,7 +104,7 @@ def to_tensorboard_log(metrics, writer, global_step, prefix=''):
 
 def main(config):
 
-
+    print(f"config.kl was set to {config.kl}")
     transform = T.Compose([
         T.NormalizeFeatures(),
         T.ToDevice(C.DEVICE),
