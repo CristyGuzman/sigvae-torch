@@ -170,23 +170,24 @@ def main(config):
     #training loop
     global_step = 0
     for epoch in range(config.n_epochs):
-        train_data, val_data, test_data = data
-        start = time.time()
-        train_losses = train(model, optimizer, train_data, config.kl)
-        elapsed = time.time() - start
-        for k in train_losses:
-            prefix = '{}/{}'.format(k, 'train')
-            writer.add_scalar(prefix, train_losses[k], global_step)
-        writer.add_scalar("lr", optimizer.state_dict()['param_groups'][0]['lr'], global_step)
-        if global_step % (config.eval_every - 1) == 0:
-            # Evaluate on validation.
+        if config.cora:
+            train_data, val_data, test_data = data
             start = time.time()
-            model.eval()
-            # valid_losses = test(model, loader, me, return_loss=True, kl=config.kl)
-            # valid_metrics = me.get_final_metrics()
-            valid_metrics = test_batch(model, train_data, val_data, me)
+            train_losses = train(model, optimizer, train_data, config.kl)
             elapsed = time.time() - start
-            to_tensorboard_log(valid_metrics, writer, global_step, 'train_valid')
+            for k in train_losses:
+                prefix = '{}/{}'.format(k, 'train')
+                writer.add_scalar(prefix, train_losses[k], global_step)
+            writer.add_scalar("lr", optimizer.state_dict()['param_groups'][0]['lr'], global_step)
+            if global_step % (config.eval_every - 1) == 0:
+                # Evaluate on validation.
+                start = time.time()
+                model.eval()
+                # valid_losses = test(model, loader, me, return_loss=True, kl=config.kl)
+                # valid_metrics = me.get_final_metrics()
+                valid_metrics = test_batch(model, train_data, val_data, me)
+                elapsed = time.time() - start
+                to_tensorboard_log(valid_metrics, writer, global_step, 'train_valid')
         if not config.cora:
             for i, abatch in tqdm(enumerate(loader)):
 
