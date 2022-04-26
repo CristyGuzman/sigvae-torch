@@ -185,7 +185,7 @@ def main(config):
                 # Evaluate on validation.
                 start = time.time()
                 model.eval()
-                valid_losses = test(model, valid_loader, me, return_loss=True, kl=config.kl)
+                valid_losses = test(model, loader, me, return_loss=True, kl=config.kl)
                 valid_metrics = me.get_final_metrics()
                 elapsed = time.time() - start
 
@@ -203,26 +203,26 @@ def main(config):
                 # Log to tensorboard.
 
                 #validation data
-                to_tensorboard_log(valid_losses, writer, global_step, 'valid')
-                to_tensorboard_log(valid_metrics, writer, global_step, 'valid')
+                to_tensorboard_log(valid_losses, writer, global_step, 'train_valid')
+                to_tensorboard_log(valid_metrics, writer, global_step, 'train_valid')
 
                 #Evaluate on train data
-                start = time.time()
-                model.eval()
-                me.reset()
-                test(model, loader, me, return_loss=False, kl=config.kl)
-                train_metrics = me.get_final_metrics()
-                elapsed = time.time() - start
-
-                s = "Eval metrics on training set: \n"
-                for m in sorted(train_metrics):
-                    trn = np.sum(train_metrics[m])
-                    s += "   {}: {:.3f}".format(m, trn)
-
-                print('[TRAIN_EVAL {:0>5d} | {:0>3d}] {} elapsed: {:.3f} secs'.format(i + 1, epoch + 1, s, elapsed))
+                # start = time.time()
+                # model.eval()
+                # me.reset()
+                # test(model, loader, me, return_loss=False, kl=config.kl)
+                # train_metrics = me.get_final_metrics()
+                # elapsed = time.time() - start
+                #
+                # s = "Eval metrics on training set: \n"
+                # for m in sorted(train_metrics):
+                #     trn = np.sum(train_metrics[m])
+                #     s += "   {}: {:.3f}".format(m, trn)
+                #
+                # print('[TRAIN_EVAL {:0>5d} | {:0>3d}] {} elapsed: {:.3f} secs'.format(i + 1, epoch + 1, s, elapsed))
 
                 # train data
-                to_tensorboard_log(train_metrics, writer, global_step, 'train')
+                # to_tensorboard_log(train_metrics, writer, global_step, 'train')
             global_step += 1
         scheduler.step(epoch)
 
