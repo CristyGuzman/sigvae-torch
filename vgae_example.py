@@ -32,7 +32,7 @@ def load_config(config_path):
 
 
 def get_losses(model, z, data, kl=True):
-    recon_loss = model.recon_loss(z, data.pos_edge_label_index, data.neg_edge_label_index)
+    recon_loss = model.reconstruction_loss(z, data.pos_edge_label_index, data.neg_edge_label_index, data.edge_index)
     if kl:
         print('Adding kl term to loss')
         kl_loss = model.kl_loss(model.__mu__, model.__logstd__)
@@ -46,7 +46,8 @@ def get_losses(model, z, data, kl=True):
 def train(model, optimizer, data, kl=True):
     model.train()
     optimizer.zero_grad()
-    z = model.encode(data.x, data.edge_index)
+    #z = model.encode(data.x, data.edge_index)
+    z = model.encode(data.x, data.pos_edge_label_index)
     #recon_loss = model.recon_loss(z, data.pos_edge_label_index)
     loss, losses = get_losses(model, z, data, kl)
     #loss = losses['total_loss']
@@ -66,11 +67,11 @@ def test(model, data, metrics_engine, return_loss=True, kl=True):
         #print(f"Printing batch: {abatch}")
         valid_data, v_dat, _ = abatch
         #print(f"Printing: {valid_data, v_dat}")
-        z = model.encode(valid_data.x, valid_data.edge_index)
+        z = model.encode(valid_data.x, valid_data.pos_edge_label_index)
         _, losses = get_losses(model, z, valid_data, kl)
         for k in losses:
             loss_vals_agg[k] += losses[k]*data.batch_size
-        targets, preds = model.test(z, valid_data.pos_edge_label_index, valid_data.neg_edge_label_index)
+        targets, preds = model.test(z, v_dat.pos_edge_label_index, v_dat.neg_edge_label_index)
         metrics_engine.compute_and_aggregate(preds, targets)
         n_samples += data.batch_size
 
