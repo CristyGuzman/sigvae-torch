@@ -68,6 +68,7 @@ class Configuration(object):
         parser.add_argument('--lr_gamma', type=float, default=0.96)
         parser.add_argument('--momentum', type=float)
         parser.add_argument('--scheduler', type=str, default='reduce_plateau')
+        parser.add_argument('--kl', type=bool, default=True)
 
         # model
         parser.add_argument('--encoder_type', type=str, default='gcn')
