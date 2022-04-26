@@ -64,9 +64,7 @@ def test(model, data, metrics_engine, return_loss=True, kl=True):
     n_samples = 0
     #model.eval()
     for i, abatch in tqdm(enumerate(data)):
-        #print(f"Printing batch: {abatch}")
         valid_data, v_dat, _ = abatch
-        #print(f"Printing: {valid_data, v_dat}")
         z = model.encode(valid_data.x, valid_data.pos_edge_label_index)
         _, losses = get_losses(model, z, valid_data, kl)
         for k in losses:
@@ -80,6 +78,15 @@ def test(model, data, metrics_engine, return_loss=True, kl=True):
             loss_vals_agg[k] /= n_samples
 
         return loss_vals_agg
+
+@torch.no_grad()
+def test_batch(model, train_data, test_data, metrics_engine):
+    z = model.encode(train_data.x, train_data.pos_edge_label_index)
+    targets, preds = model.test(z, test_data.pos_edge_label_index, test_data.neg_edge_label_index)
+    metrics = metrics_engine.compute(preds, targets)
+    return metrics
+
+
 
 def create_model_dir(experiment_main_dir, experiment_id, model_summary):
     """
@@ -185,25 +192,26 @@ def main(config):
                 # Evaluate on validation.
                 start = time.time()
                 model.eval()
-                valid_losses = test(model, loader, me, return_loss=True, kl=config.kl)
-                valid_metrics = me.get_final_metrics()
+                #valid_losses = test(model, loader, me, return_loss=True, kl=config.kl)
+                #valid_metrics = me.get_final_metrics()
+                valid_metrics = test_batch(model, train_data, val_data, me)
                 elapsed = time.time() - start
 
                 # Log to console.
-                loss_string = ' '.join(['{}: {:.6f}'.format(k, valid_losses[k]) for k in valid_losses])
-                print('[VALID {:0>5d} | {:0>3d}] {} elapsed: {:.3f} secs'.format(
-                    i + 1, epoch + 1, loss_string, elapsed))
+                #loss_string = ' '.join(['{}: {:.6f}'.format(k, valid_losses[k]) for k in valid_losses])
+                #print('[VALID {:0>5d} | {:0>3d}] {} elapsed: {:.3f} secs'.format(
+                #    i + 1, epoch + 1, loss_string, elapsed))
                 s = "Eval metrics on validation set: \n"
                 for m in sorted(valid_metrics):
                     val = np.sum(valid_metrics[m])
                     s += "   {}: {:.3f}".format(m, val)
 
-                print('[VALID {:0>5d} | {:0>3d}] {}'.format(i + 1, epoch + 1, s))
+                print('[VALID {:0>5d} | {:0>3d}] {} elapsed; {: .3f} secs '.format(i + 1, epoch + 1, s, elapsed))
 
                 # Log to tensorboard.
 
                 #validation data
-                to_tensorboard_log(valid_losses, writer, global_step, 'train_valid')
+                #to_tensorboard_log(valid_losses, writer, global_step, 'train_valid')
                 to_tensorboard_log(valid_metrics, writer, global_step, 'train_valid')
 
                 #Evaluate on train data
