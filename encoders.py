@@ -5,7 +5,8 @@ from torch_geometric.nn import GINConv, global_add_pool, GATConv
 import torch.nn.functional as F
 from torch.nn import BatchNorm1d, Linear, ReLU, Sequential
 from torch_geometric.nn.models.autoencoder import VGAE
-
+from torch_geometric.utils import (add_self_loops, negative_sampling,
+                                   remove_self_loops)
 
 class GCNEncoder(torch.nn.Module):
     def __init__(self, in_channels, out_channels):
@@ -116,6 +117,17 @@ class VGAE2(VGAE):
     def model_name(self):
         """A summary string of this model. Override this if desired."""
         return '{}-{}'.format(self.__class__.__name__, self.config.tag)
+
+    def reconstruction_loss(self, z, pos_edge_index, neg_edge_index, all_edge_index):
+        pos_loss = -torch.log(
+            self.decoder(z, pos_edge_index, sigmoid=True) + 1e-15).mean()
+        if neg_edge_index is None:
+            # Do not include self-loops in negative samples
+            all_edge_index_tmp, _ = remove_self_loops(all_edge_index)
+            all_edge_index_tmp, _ = add_self_loops(all_edge_index_tmp)
+            neg_edge_index = negative_sampling(all_edge_index_tmp, z.size(0), pos_edge_index.size(1))
+        neg_loss = -torch.log(1 - self.decoder(z, neg_edge_index, sigmoid=True) + 1e-15).mean()
+        return pos_loss + neg_loss
 
     def test(self, z, pos_edge_index, neg_edge_index):
         pos_y = z.new_ones(pos_edge_index.size(1))
