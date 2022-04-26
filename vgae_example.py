@@ -4,6 +4,7 @@ import os
 import pickle
 import shutil
 from data import MyOwnDataset
+from torch_geometric.datasets import Planetoid
 import torch
 import torch.optim as optim
 from tqdm import tqdm
@@ -119,6 +120,9 @@ def main(config):
         T.RandomLinkSplit(num_val=0.05, num_test=0.1, is_undirected=True,
                           split_labels=True, add_negative_train_samples=True),
     ])
+    if config.cora:
+        dataset = Planetoid(config.train_data_dir, "Cora", transform=transform)
+        data = dataset[0].to(C.DEVICE)
     print('Creating training dataset')
     dataset = MyOwnDataset(root=config.train_data_dir, directory=config.train_data_dir,
                            transform=transform)
