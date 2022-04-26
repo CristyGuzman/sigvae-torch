@@ -69,7 +69,7 @@ class Configuration(object):
         parser.add_argument('--momentum', type=float)
         parser.add_argument('--scheduler', type=str, default='reduce_plateau')
 
-        parser.add_argument('--kl', type=bool, default=False, action='store_true')
+        parser.add_argument('--kl', default=False, action='store_true')
 
         # model
         parser.add_argument('--encoder_type', type=str, default='gcn')
