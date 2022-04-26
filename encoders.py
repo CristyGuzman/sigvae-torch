@@ -83,6 +83,7 @@ class VariationalEncoder(torch.nn.Module):
         self.out_channels = config.output_size
         if self.encoder_type == 'gcn':
             self.conv1 = GCNConv(self.in_channels, 2 * self.out_channels)
+            self.conv2 = GCNConv(2 * self.out_channels, 2 * self.out_channels)
             self.conv_mu = GCNConv(2 * self.out_channels, self.out_channels)
             self.conv_logstd = GCNConv(2 * self.out_channels, self.out_channels)
         elif self.encoder_type == 'gin':
@@ -106,6 +107,7 @@ class VariationalEncoder(torch.nn.Module):
 
     def forward(self, x, edge_index):
         x = self.conv1(x, edge_index).relu()
+        x = self.conv2(x, edge_index).relu()
         return self.conv_mu(x, edge_index), self.conv_logstd(x, edge_index)
 
 
