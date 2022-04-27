@@ -82,6 +82,7 @@ def main(config):
                 writer.add_scalar('ROC', roc_auc, global_step)
                 writer.add_scalar('ap', ap, global_step)
                 print("Epoch {} - Loss: {} ROC_AUC: {} Precision: {}".format(epoch, loss.cpu().item(), roc_auc, ap))
+                global_step += 1
 
 if __name__ == '__main__':
     main(Configuration.parse_cmd())
