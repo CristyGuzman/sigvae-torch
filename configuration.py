@@ -57,7 +57,7 @@ class Configuration(object):
         parser.add_argument('--valid_data_dir', default='/home/csolis/data/pyg_datasets/val')
 
         # Learning configurations.
-        parser.add_argument('--lr', type=float, default=5.0e-4, help='Learning rate.')
+        parser.add_argument('--lr', type=float, default=0.01, help='Learning rate.')
         parser.add_argument('--optimizer', type=str, default='adam')
         parser.add_argument('--nesterov', type=bool, default=True)
         parser.add_argument('--n_epochs', type=int, default=700, help='Number of epochs.')
