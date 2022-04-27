@@ -41,7 +41,7 @@ def main(config):
     # dataset
     print('Creating training dataset')
     dataset = MyOwnDataset(root=config.train_data_dir, directory=config.train_data_dir, transform=transform)
-    data_list = json_to_sparse_matrix(config.train_data_dir)
+    data_list = json_to_sparse_matrix(os.listdir(os.path.join(config.train_data_dir, 'raw')))
     data_list_transformed = [transform(data) for data in data_list]
     loader = DataLoader(data_list_transformed, batch_size=config.bs_train)
 
