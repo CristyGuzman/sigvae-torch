@@ -64,6 +64,7 @@ def main(config):
     # train_data, valid_data, test_data = data
     global_step = 0
     for epoch in range(config.n_epochs):
+        print(f'Epoch {epoch}')
         for i, abatch in tqdm(enumerate(loader)):
             train_data, val_data, test_data = abatch
             all_edge_index = train_data.edge_index
