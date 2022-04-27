@@ -18,7 +18,7 @@ from vgae_example import create_model_dir
 from configuration import CONSTANTS as C
 from configuration import Configuration
 
-from data import MyOwnDataset
+from data import MyOwnDataset, json_to_sparse_matrix
 from torch_geometric.loader import DataLoader
 
 torch.manual_seed(12345)
@@ -41,7 +41,9 @@ def main(config):
     # dataset
     print('Creating training dataset')
     dataset = MyOwnDataset(root=config.train_data_dir, directory=config.train_data_dir, transform=transform)
-    loader = DataLoader(dataset, batch_size=config.bs_train)
+    data_list = json_to_sparse_matrix(config.train_data_dir)
+    data_list_transformed = [transform(data) for data in data_list]
+    loader = DataLoader(data_list_transformed, batch_size=config.bs_train)
 
     if config.input_size is None:
         config.input_size = dataset.num_features
