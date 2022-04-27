@@ -48,7 +48,7 @@ def main(config):
     loader = DataLoader(data_list_transformed, batch_size=config.bs_train)
 
     if config.input_size is None:
-        config.input_size = dataset.num_features
+        config.input_size = data_list[0].num_features
 
     model = DeepVGAE(config).to(C.DEVICE)
     optimizer = Adam(model.parameters(), lr=config.lr)
