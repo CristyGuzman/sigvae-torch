@@ -17,6 +17,7 @@ from model_vgae import DeepVGAE
 from config_vgae import parse_args
 from vgae_example import create_model_dir
 from configuration import CONSTANTS as C
+from configuration import Configuration
 
 from data import MyOwnDataset
 from torch_geometric.loader import DataLoader
@@ -84,3 +85,6 @@ def main(config):
                 writer.add_scalar('ROC', roc_auc, global_step)
                 writer.add_scalar('ap', ap, global_step)
                 print("Epoch {} - Loss: {} ROC_AUC: {} Precision: {}".format(epoch, loss.cpu().item(), roc_auc, ap))
+
+if __name__ == '__main__':
+    main(Configuration.parse_cmd())
