@@ -27,7 +27,7 @@ class DeepVGAE(VGAE):
                                                           args.hidden_size,
                                                           args.output_size),
                                        decoder=InnerProductDecoder())
-
+        self.config = args
     def forward(self, x, edge_index):
         z = self.encode(x, edge_index)
         adj_pred = self.decoder.forward_all(z)
@@ -55,3 +55,7 @@ class DeepVGAE(VGAE):
             z = self.encode(x, train_pos_edge_index)
         roc_auc_score, average_precision_score = self.test(z, test_pos_edge_index, test_neg_edge_index)
         return roc_auc_score, average_precision_score
+
+    def model_name(self):
+        """A summary string of this model. Override this if desired."""
+        return '{}-{}'.format(self.__class__.__name__, self.config.tag)
