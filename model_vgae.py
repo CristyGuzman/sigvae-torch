@@ -23,9 +23,9 @@ class GCNEncoder(nn.Module):
 
 class DeepVGAE(VGAE):
     def __init__(self, args):
-        super(DeepVGAE, self).__init__(encoder=GCNEncoder(args.enc_in_channels,
-                                                          args.enc_hidden_channels,
-                                                          args.enc_out_channels),
+        super(DeepVGAE, self).__init__(encoder=GCNEncoder(args.input_size,
+                                                          args.hidden_size,
+                                                          args.output_size),
                                        decoder=InnerProductDecoder())
 
     def forward(self, x, edge_index):
