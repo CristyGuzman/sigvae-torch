@@ -73,7 +73,7 @@ def main(config):
             writer.add_scalar('loss/train', loss, global_step)
             loss.backward()
             optimizer.step()
-            if epoch % 2 == 0:
+            if global_step % config.eval_every == 0:
                 model.eval()
                 roc_auc, ap = model.single_test(train_data.x,
                                                 train_data.pos_edge_label_index,
