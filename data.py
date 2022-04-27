@@ -16,11 +16,14 @@ from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
 
 class MyData(Data):
- def __cat_dim__(self, key, value, *args, **kwargs):
-     if (key == 'pos_weight') or (key == 'norm') or (key == 'adj_norm') or (key == 'adj_label'):
-         return None
-     else:
-         return super().__cat_dim__(key, value, *args, **kwargs)
+    def __cat_dim__(self, key, value, *args, **kwargs):
+        if (key == 'pos_weight') or (key == 'norm') or (key == 'adj_norm') or (key == 'adj_label'):
+            return None
+        else:
+            return super().__cat_dim__(key, value, *args, **kwargs)
+
+    def stores_as(self, data: 'BaseData'):
+        return self
 
 def json_to_sparse_matrix(file_dir):
     adj_features_list = []
@@ -101,8 +104,7 @@ class MyOwnDataset(InMemoryDataset):
         #    torch.save(data, os.path.join(self.processed_dir, f'data_{i}.pt'))
         torch.save((data, slices), self.processed_paths[0])
 
-    def stores_as(self, data: 'BaseData'):
-        return self
+
 
 
 
