@@ -70,8 +70,10 @@ def main(config):
             all_edge_index = train_data.edge_index
             model.train()
             optimizer.zero_grad()
-            loss = model.loss(train_data.x, train_data.pos_edge_label_index, all_edge_index)
-            writer.add_scalar('loss/train', loss, global_step)
+            pos_loss, neg_loss, kl_loss, loss, losses = model.loss(train_data.x, train_data.pos_edge_label_index, all_edge_index)
+            for k in losses:
+                prefix = '{}/{}'.format(k, 'train')
+                writer.add_scalar(prefix, losses[k], global_step)
             loss.backward()
             optimizer.step()
             if global_step % config.eval_every == 0:
