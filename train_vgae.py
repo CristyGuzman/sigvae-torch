@@ -14,7 +14,6 @@ import torch_geometric.transforms as T
 from torch_geometric.utils import train_test_split_edges
 
 from model_vgae import DeepVGAE
-from config_vgae import parse_args
 from vgae_example import create_model_dir
 from configuration import CONSTANTS as C
 from configuration import Configuration
@@ -25,7 +24,7 @@ from torch_geometric.loader import DataLoader
 torch.manual_seed(12345)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-args = parse_args()
+
 
 
 os.makedirs("datasets", exist_ok=True)
@@ -46,8 +45,6 @@ def main(config):
 
     if config.input_size is None:
         config.input_size = dataset.num_features
-    print(f'Args are: {args}')
-    print(args.enc_in_channels)
 
     model = DeepVGAE(config).to(C.DEVICE)
     optimizer = Adam(model.parameters(), lr=config.lr)
