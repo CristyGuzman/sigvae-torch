@@ -101,6 +101,9 @@ class MyOwnDataset(InMemoryDataset):
         #    torch.save(data, os.path.join(self.processed_dir, f'data_{i}.pt'))
         torch.save((data, slices), self.processed_paths[0])
 
+    def stores_as(self, data: 'BaseData'):
+        return self
+
 
 
 if __name__ == '__main__':
