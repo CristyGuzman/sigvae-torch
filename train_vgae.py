@@ -56,6 +56,8 @@ def main(config):
     experiment_id = int(time.time())
     experiment_name = model.model_name()
     model_dir = create_model_dir(C.EXPERIMENT_DIR, experiment_id, experiment_name)
+    checkpoint_file = os.path.join(model_dir, 'model.pth')
+    print('Saving checkpoints to {}'.format(checkpoint_file))
 
     config.to_json(os.path.join(model_dir, 'config.json'))
     # Save the command line that was used.
@@ -67,6 +69,7 @@ def main(config):
 
     # train_data, valid_data, test_data = data
     global_step = 0
+    best_loss = float('inf')
     for epoch in range(config.n_epochs):
         print(f'Epoch {epoch}')
         for i, abatch in tqdm(enumerate(loader)):
@@ -89,7 +92,29 @@ def main(config):
                 writer.add_scalar('ROC', roc_auc, global_step)
                 writer.add_scalar('ap', ap, global_step)
                 print("Epoch {} - Loss: {} ROC_AUC: {} Precision: {}".format(epoch, loss.cpu().item(), roc_auc, ap))
+            #if float(loss) < best_loss:
+            #    best_loss = float(loss)
+            #    torch.save({
+            #        'iteration': i,
+            #        'epoch': epoch,
+            #        'global_step': global_step,
+            #        'model_state_dict': model.state_dict(),
+            #        'optimizer_state_dict': optimizer.state_dict(),
+            #        'total_loss': float(loss),
+            #        'kl_loss': float(kl_loss),
+            #        'recon_loss': float(pos_loss) + float(neg_loss),
+            #    }, checkpoint_file)
+
             global_step += 1
+    model.eval()
+    pos_loss, neg_loss, kl_loss, loss, losses = model.loss(train_data.x, train_data.pos_edge_label_index,
+                                                           all_edge_index)
+    torch.save({'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'total_loss': float(loss),
+                'kl_loss': float(kl_loss),
+                'recon_loss': float(pos_loss) + float(neg_loss),
+                }, checkpoint_file)
 
 if __name__ == '__main__':
     main(Configuration.parse_cmd())
