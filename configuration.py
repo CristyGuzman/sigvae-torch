@@ -80,6 +80,9 @@ class Configuration(object):
         parser.add_argument('--num_layers', type=int, default=2)
         parser.add_argument('--dropout', type=float, default=0.5)
 
+        # directories
+        parser.add_argument('--save_model_dir', type=str)
+
         config, unknown = parser.parse_known_args()
         # config = parser.parse_args()
         return Configuration(vars(config))
