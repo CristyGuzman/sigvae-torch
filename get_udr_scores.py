@@ -84,18 +84,26 @@ if __name__ == '__main__':
                         include_raw_correlations=True,
                         kl_filter_threshold=0.01)
 
-def get_kl_loss_per_graph(model, data):
+def get_kl_and_embedding_per_graph(model, data):
     """
     returns num graphs, num latent dims
     """
-    z = model.encode(data.x, data.edge_index)
+    z = model.encode(data.x, data.edge_index).detach().numpy()
     batch = data.batch
-    mu = model.__mu__
-    logstd = model.__logstd__
+    mu = model.__mu__.detach().numpy()
+    logstd = model.__logstd__.detach().numpy()
     separate_embeddings = split_embeddings_from_batch(z, batch)
+    graph_embeddings = aggregate_node_embeddings(separate_embeddings, batch)
     separate_mus = split_embeddings_from_batch(mu, batch)
     separate_logstds = split_embeddings_from_batch(logstd, batch) # list of len num of graphs, each elem (num_nodes, num_latent_dims)
     #torch.mean(1 + 2 * logstd - mu ** 2 - logstd.exp() ** 2, dim=0).shape
+    kl_per_dim = lambda mu, log: 1 + 2 * log - mu ** 2 - np.exp(log) ** 2
+    kls_per_graph = []
+    for mus, logs in zip(separate_mus, separate_logstds):
+        all_kls = kl_per_dim(mus, logs)  # num_nodes, num_latent_dims
+        kls_per_graph.append(np.mean(all_kls, axis=0))  # num_latent_dims
+    return kls_per_graph, graph_embeddings  # num_graphs,num_latent_dims
+
 
 #1. get latents from model.encode
 #2. get mu and sigma from model
