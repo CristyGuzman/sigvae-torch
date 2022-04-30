@@ -63,7 +63,7 @@ def get_kl_and_embedding_per_graph(model, data):
     mu = model.__mu__.detach().numpy()
     logstd = model.__logstd__.detach().numpy()
     separate_embeddings = split_embeddings_from_batch(z, batch)
-    graph_embeddings = aggregate_node_embeddings(separate_embeddings, batch)
+    graph_embeddings = aggregate_node_embeddings(separate_embeddings)
     separate_mus = split_embeddings_from_batch(mu, batch)
     separate_logstds = split_embeddings_from_batch(logstd, batch) # list of len num of graphs, each elem (num_nodes, num_latent_dims)
     #torch.mean(1 + 2 * logstd - mu ** 2 - logstd.exp() ** 2, dim=0).shape
