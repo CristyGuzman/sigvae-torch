@@ -4,6 +4,8 @@ import time
 import sys
 import json
 import pickle
+import random
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -31,6 +33,9 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 os.makedirs("datasets", exist_ok=True)
 def main(config):
+    torch.manual_seed(config.seed)
+    random.seed(config.seed)
+    np.random.seed(config.seed)
 
     transform = T.Compose([
         T.NormalizeFeatures(),
