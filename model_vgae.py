@@ -58,4 +58,4 @@ class DeepVGAE(VGAE):
 
     def model_name(self):
         """A summary string of this model. Override this if desired."""
-        return '{}-{}'.format(self.__class__.__name__, self.config.tag)
+        return '{}-{}-{}-{}'.format(self.__class__.__name__, self.config.lr, self.config.beta, self.config.seed)
