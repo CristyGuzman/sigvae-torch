@@ -121,7 +121,7 @@ def main(config):
         print(latents_dict)
         if not os.path.exists(emb_directory):
             os.makedirs(emb_directory)
-        with open(os.path.join(emb_directory, f'emb_{i}.pkl'), 'w') as fp:
+        with open(os.path.join(emb_directory, f'emb_{i}.pkl'), 'wb') as fp:
             pickle.dump(latents_dict, fp)
 
 if __name__ == '__main__':
