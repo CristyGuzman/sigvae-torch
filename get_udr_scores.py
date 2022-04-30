@@ -6,7 +6,7 @@ from model_vgae import DeepVGAE
 import torch_geometric.transforms as T
 from data import json_to_sparse_matrix
 from configuration import Configuration, CONSTANTS as C
-from disentanglement import compute_udr_sklearn
+from disentanglement import compute_udr_sklearn, spearman_correlation_conv, relative_strength_disentanglement
 from torch_geometric.loader import DataLoader
 import numpy as np
 
@@ -110,3 +110,54 @@ def get_kl_and_embedding_per_graph(model, data):
 #3. split these in a list of length num_graphs, end up having (num_graphs, (num_nodes, num_latent_dims))
 #4. compute kl per dimension (get mean across nodes, end up with (num_graphs, num_latent_dims)
 #5. aggregate node embeddings, end up with (num_graphs, num_latent_dims)
+
+# done: get kl and embeddings per graph, calculate udr score:
+    # compute correlation matrix
+
+def compute_udr(model_dir_list, data):
+    """model_dirs must have config files in them as well
+    """
+    num_models = len(model_dir_list)
+    configs_list = get_configs_list(model_dir_list)
+    models = get_representation_functions(model_dir_list, configs_list)
+    kl_divergence = []
+    representation_points = []
+    for j, model in enumerate(models):
+        kls_per_graph, graph_embeddings = get_kl_and_embedding_per_graph(model, data)
+        total_kls = np.mean(kls_per_graph, axis=0) #num_latent_dims
+        kl_divergence.append(kls_per_graph) # num_models, num_latent_dims
+        representation_points.append(graph_embeddings)
+
+    kl_divergence = np.array(kl_divergence) # num_models, num_latent_dims
+    kls = np.sum(kl_divergence, axis=0) #num_latent_dims
+    latent_dim = kl_divergence.shape[1]
+    corr_matrix_all = np.zeros((num_models, num_models, latent_dim, latent_dim))
+    disentanglement = np.zeros((num_models, num_models, 1))
+    for i in range(len(models)):
+        for j in range(len(models)):
+            if i == j:
+                continue
+
+            corr_matrix = spearman_correlation_conv(representation_points[i], representation_points[j])
+
+            corr_matrix_all[i, j, :, :] = corr_matrix
+            disentanglement[i, j] = relative_strength_disentanglement(corr_matrix)
+    scores_dict = {}
+
+    scores_dict["raw_correlations"] = corr_matrix_all.tolist()
+    scores_dict["pairwise_disentanglement_scores"] = disentanglement.tolist()
+
+    model_scores = []
+    for i in range(num_models):
+        model_scores.append(np.median(np.delete(disentanglement[:, i], i)))
+
+    scores_dict["model_scores"] = model_scores
+    return scores_dict
+
+
+def get_configs_list(model_dir_list):
+    configs_list = []
+    for model_dir in model_dir_list:
+        with open(os.path.join(model_dir, 'config.json'), 'r') as f:
+            configs_list.append(json.load(f))
+    return configs_list
