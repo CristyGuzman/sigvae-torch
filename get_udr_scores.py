@@ -14,10 +14,9 @@ parser = argparse.ArgumentParser()
 
 def parse_cmd():
     #General
-    parser.add_argument('--model_dir1', type=str, help='directory path where first model and config are saved.')
-    parser.add_argument('--model_dir2', type=str, help='directory path where second model and config are saved.')
-    parser.add_argument('--model_dir3', type=str, help='directory path where third model and config are saved.')
-    parser.add_argument('--model_dir4', type=str, help='directory path where fourth model and config are saved.')
+    parser.add_argument('--model_dirs', nargs="+", help='list of model directories')
+    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--data_dir', type=str, default='/home/csolis/data/pyg_datasets')
     args = parser.parse_args()
     return args
 
@@ -61,28 +60,26 @@ if __name__ == '__main__':
                           split_labels=True, add_negative_train_samples=True),
     ])
     args = parse_cmd()
-    config = Configuration().to_json(args.model_dir)
 
-    directory = os.path.join(config.train_data_dir, 'raw')
+    directory = os.path.join(args.data_dir, 'raw')
     file_list = [os.path.join(directory, f) for f in os.listdir(directory)]
     data_list = json_to_sparse_matrix(file_list)
     data_list_transformed = [transform(data) for data in data_list]
-    loader = DataLoader(data_list_transformed, batch_size=config.bs_train) #bs train in this case corresponds to
+    loader = DataLoader(data_list_transformed, batch_size=args.batch_size) #bs train in this case corresponds to
     train_data, val_data, test_data = next(iter(loader))
-    random_state = np.random.RandomState(0)
     model_dir_list = [args.model_dir_1, args.model_dir_2, args.model_dir_3, args.model_dir_4]
-    config_list = [Configuration().to_json(m_dir) for m_dir in model_dir_list]
-    models = get_representation_functions(model_dir_list, config_list)
-
-    scores = compute_udr_sklearn(train_data,
-                        models,
-                        random_state,
-                        config.bs_train,
-                        num_data_points=100,#hardcoded 10 graphs per josn file, loading files in /home/csolis/pyg_dataset/raw
-                        correlation_matrix="spearman",
-                        filter_low_kl=True,
-                        include_raw_correlations=True,
-                        kl_filter_threshold=0.01)
+    #config_list = [Configuration().to_json(m_dir) for m_dir in model_dir_list]
+    # models = get_representation_functions(model_dir_list, config_list)
+    #
+    # scores = compute_udr_sklearn(train_data,
+    #                     models,
+    #                     random_state,
+    #                     config.bs_train,
+    #                     num_data_points=100,#hardcoded 10 graphs per josn file, loading files in /home/csolis/pyg_dataset/raw
+    #                     correlation_matrix="spearman",
+    #                     filter_low_kl=True,
+    #                     include_raw_correlations=True,
+    #                     kl_filter_threshold=0.01)
 
 def get_kl_and_embedding_per_graph(model, data):
     """
