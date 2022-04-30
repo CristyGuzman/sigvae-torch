@@ -87,7 +87,7 @@ def compute_udr(model_dir_list, data):
     """model_dirs must have config files in them as well
     """
     num_models = len(model_dir_list)
-    configs_list = get_configs_list(model_dir_list)
+    configs_list = get_configs_list(model_dir_list, data.num_features)
     models = get_representation_functions(model_dir_list, configs_list)
     kl_divergence = []
     representation_points = []
@@ -124,10 +124,12 @@ def compute_udr(model_dir_list, data):
     return scores_dict
 
 
-def get_configs_list(model_dir_list):
+def get_configs_list(model_dir_list, data_input_size):
     configs_list = []
     for model_dir in model_dir_list:
         with open(os.path.join(model_dir, 'config.json'), 'r') as f:
+            config = json.load(f)
+            config['input_size'] = data_input_size
             configs_list.append(json.load(f))
     return configs_list
 
