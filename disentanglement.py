@@ -83,7 +83,7 @@ def _generate_representation_dataset(ground_truth_data,
             kl_divergence[j][i, :] = representation_batch[j][1]
             representation_points[j][i * batch_size:(i + 1) * batch_size, :] = (
             representation_batch[j][0])
-    return representation_points, [np.mean(kl, axis=0) for kl in kl_divergence]
+    return representation_points, [np.mean(kl, axis=0) for kl in kl_divergence] #(num models,num_data_points, latent_dims) (num_models, latent_dims)
 
 def _generate_representation_batch(ground_truth_data, representation_functions,
                                    batch_size, random_state):
