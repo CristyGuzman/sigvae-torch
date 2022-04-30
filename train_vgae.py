@@ -3,6 +3,7 @@ from tqdm import tqdm
 import time
 import sys
 import json
+import pickle
 
 import torch
 import torch.nn as nn
@@ -120,8 +121,8 @@ def main(config):
         print(latents_dict)
         if not os.path.exists(emb_directory):
             os.makedirs(emb_directory)
-        with open(os.path.join(emb_directory, f'emb_{i}.json'), 'w') as fp:
-            json.dump(latents_dict, fp)
+        with open(os.path.join(emb_directory, f'emb_{i}.pkl'), 'w') as fp:
+            pickle.dump(latents_dict, fp)
 
 if __name__ == '__main__':
     main(Configuration.parse_cmd())
