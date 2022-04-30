@@ -158,5 +158,4 @@ if __name__ == '__main__':
     #                     filter_low_kl=True,
     #                     include_raw_correlations=True,
     #                     kl_filter_threshold=0.01)
-
-
+    compute_udr(model_dir_list,train_data)
