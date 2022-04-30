@@ -95,7 +95,7 @@ def compute_udr(model_dir_list, data):
     for j, model in enumerate(models):
         kls_per_graph, graph_embeddings = get_kl_and_embedding_per_graph(model, data)
         total_kls = np.mean(kls_per_graph, axis=0) #num_latent_dims
-        kl_divergence.append(kls_per_graph) # num_models, num_latent_dims
+        kl_divergence.append(total_kls) # num_models, num_latent_dims
         representation_points.append(graph_embeddings)
 
     kl_divergence = np.array(kl_divergence) # num_models, num_latent_dims
