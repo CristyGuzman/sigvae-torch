@@ -129,8 +129,8 @@ def get_configs_list(model_dir_list, data_input_size):
     for model_dir in model_dir_list:
         with open(os.path.join(model_dir, 'config.json'), 'r') as f:
             config = json.load(f)
-            config['input_size'] = data_input_size
-            configs_list.append(json.load(f))
+        config['input_size'] = data_input_size
+        configs_list.append(config)
     return configs_list
 
 if __name__ == '__main__':
@@ -161,4 +161,4 @@ if __name__ == '__main__':
     #                     filter_low_kl=True,
     #                     include_raw_correlations=True,
     #                     kl_filter_threshold=0.01)
-    compute_udr(model_dir_list,train_data)
+    compute_udr(model_dir_list, train_data)
