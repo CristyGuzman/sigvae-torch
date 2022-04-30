@@ -127,8 +127,9 @@ def compute_udr(model_dir_list, data):
 def get_configs_list(model_dir_list, data_input_size):
     configs_list = []
     for model_dir in model_dir_list:
-        config = Configuration().from_json(model_dir)
-        configs_list.append(config)
+        with open(model_dir, 'r') as f:
+            config = json.load(f)
+            configs_list.append(Configuration(config))
     return configs_list
 
 if __name__ == '__main__':
