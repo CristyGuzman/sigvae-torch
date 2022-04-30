@@ -52,35 +52,6 @@ def aggregate_node_embeddings(graphs_list):
         graph_embeddings.append(np.mean(graphs_list[i], axis=0))
     return graph_embeddings
 
-if __name__ == '__main__':
-    transform = T.Compose([
-        T.NormalizeFeatures(),
-        T.ToDevice(C.DEVICE),
-        T.RandomLinkSplit(num_val=0.05, num_test=0.1, is_undirected=True,
-                          split_labels=True, add_negative_train_samples=True),
-    ])
-    args = parse_cmd()
-
-    directory = os.path.join(args.data_dir, 'raw')
-    file_list = [os.path.join(directory, f) for f in os.listdir(directory)]
-    data_list = json_to_sparse_matrix(file_list)
-    data_list_transformed = [transform(data) for data in data_list]
-    loader = DataLoader(data_list_transformed, batch_size=args.batch_size) #bs train in this case corresponds to
-    train_data, val_data, test_data = next(iter(loader))
-    model_dir_list = args.model_dirs
-    #config_list = [Configuration().to_json(m_dir) for m_dir in model_dir_list]
-    # models = get_representation_functions(model_dir_list, config_list)
-    #
-    # scores = compute_udr_sklearn(train_data,
-    #                     models,
-    #                     random_state,
-    #                     config.bs_train,
-    #                     num_data_points=100,#hardcoded 10 graphs per josn file, loading files in /home/csolis/pyg_dataset/raw
-    #                     correlation_matrix="spearman",
-    #                     filter_low_kl=True,
-    #                     include_raw_correlations=True,
-    #                     kl_filter_threshold=0.01)
-
 def get_kl_and_embedding_per_graph(model, data):
     """
     returns num graphs, num latent dims
@@ -158,3 +129,34 @@ def get_configs_list(model_dir_list):
         with open(os.path.join(model_dir, 'config.json'), 'r') as f:
             configs_list.append(json.load(f))
     return configs_list
+
+if __name__ == '__main__':
+    transform = T.Compose([
+        T.NormalizeFeatures(),
+        T.ToDevice(C.DEVICE),
+        T.RandomLinkSplit(num_val=0.05, num_test=0.1, is_undirected=True,
+                          split_labels=True, add_negative_train_samples=True),
+    ])
+    args = parse_cmd()
+
+    directory = os.path.join(args.data_dir, 'raw')
+    file_list = [os.path.join(directory, f) for f in os.listdir(directory)]
+    data_list = json_to_sparse_matrix(file_list)
+    data_list_transformed = [transform(data) for data in data_list]
+    loader = DataLoader(data_list_transformed, batch_size=args.batch_size) #bs train in this case corresponds to
+    train_data, val_data, test_data = next(iter(loader))
+    model_dir_list = args.model_dirs
+    #config_list = [Configuration().to_json(m_dir) for m_dir in model_dir_list]
+    # models = get_representation_functions(model_dir_list, config_list)
+    #
+    # scores = compute_udr_sklearn(train_data,
+    #                     models,
+    #                     random_state,
+    #                     config.bs_train,
+    #                     num_data_points=100,#hardcoded 10 graphs per josn file, loading files in /home/csolis/pyg_dataset/raw
+    #                     correlation_matrix="spearman",
+    #                     filter_low_kl=True,
+    #                     include_raw_correlations=True,
+    #                     kl_filter_threshold=0.01)
+
+
