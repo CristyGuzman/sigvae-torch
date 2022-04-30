@@ -47,7 +47,7 @@ class DeepVGAE(VGAE):
         neg_loss = -torch.log(1 - self.decoder(z, neg_edge_index, sigmoid=True) + 1e-15).mean()
 
         kl_loss = 1 / x.size(0) * self.kl_loss()
-        loss = pos_loss + neg_loss + kl_loss
+        loss = pos_loss + neg_loss + self.config.beta*kl_loss
         return pos_loss, neg_loss, kl_loss, loss, {'pos_loss': float(pos_loss), 'neg_loss': float(neg_loss), 'kl_loss': float(kl_loss), 'total_loss': float(loss)}
 
     def single_test(self, x, train_pos_edge_index, test_pos_edge_index, test_neg_edge_index):

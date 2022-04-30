@@ -69,6 +69,7 @@ class Configuration(object):
         parser.add_argument('--lr_gamma', type=float, default=0.96)
         parser.add_argument('--momentum', type=float)
         parser.add_argument('--scheduler', type=str, default='reduce_plateau')
+        parser.add_argument('--beta', type=float, default=1.0)
 
         parser.add_argument('--kl', default=False, action='store_true')
 
