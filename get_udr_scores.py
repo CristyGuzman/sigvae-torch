@@ -67,7 +67,7 @@ if __name__ == '__main__':
     data_list_transformed = [transform(data) for data in data_list]
     loader = DataLoader(data_list_transformed, batch_size=args.batch_size) #bs train in this case corresponds to
     train_data, val_data, test_data = next(iter(loader))
-    model_dir_list = [args.model_dir_1, args.model_dir_2, args.model_dir_3, args.model_dir_4]
+    model_dir_list = args.model_dirs
     #config_list = [Configuration().to_json(m_dir) for m_dir in model_dir_list]
     # models = get_representation_functions(model_dir_list, config_list)
     #
