@@ -117,6 +117,7 @@ def main(config):
         latents = model.encode(abatch.x, abatch.edge_index)
         latents_dict = {'embedding': latents.detach().numpy(),
                         'batch': abatch.batch}
+        print(latents_dict)
         if not os.path.exists(emb_directory):
             os.makedirs(emb_directory)
         with open(os.path.join(emb_directory, f'emb_{i}.json'), 'w') as fp:
