@@ -147,7 +147,7 @@ if __name__ == '__main__':
     file_list = [os.path.join(directory, f) for f in os.listdir(directory)]
     data_list = json_to_sparse_matrix(file_list)
     data_list_transformed = [transform(data) for data in data_list]
-    loader = DataLoader(data_list_transformed, batch_size=args.batch_size) #bs train in this case corresponds to
+    loader = DataLoader(data_list_transformed, batch_size=args.batch_size, shuffle=True) #bs train in this case corresponds to
     train_data, val_data, test_data = next(iter(loader))
     model_dir_list = args.model_dirs
     #config_list = [Configuration().to_json(m_dir) for m_dir in model_dir_list]
