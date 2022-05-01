@@ -17,6 +17,7 @@ def parse_cmd():
     parser.add_argument('--model_dirs', nargs="+", help='list of model directories')
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--data_dir', type=str, default='/home/csolis/data/pyg_datasets')
+    parser.add_argument('--save_dir', type=str)
     args = parser.parse_args()
     return args
 
@@ -161,4 +162,8 @@ if __name__ == '__main__':
     #                     filter_low_kl=True,
     #                     include_raw_correlations=True,
     #                     kl_filter_threshold=0.01)
-    compute_udr(model_dir_list, train_data)
+    udrs = compute_udr(model_dir_list, train_data)
+    with open(os.path.join(args.save_dir, 'udrs.txt'), 'w') as f:
+        for line in udrs:
+            f.write(line)
+            f.write('\n')
