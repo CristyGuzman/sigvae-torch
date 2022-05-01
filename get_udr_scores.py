@@ -165,5 +165,5 @@ if __name__ == '__main__':
     udrs = compute_udr(model_dir_list, train_data)
     with open(os.path.join(args.save_dir, 'udrs.txt'), 'w') as f:
         for line in udrs['model_scores']:
-            f.write(line)
+            f.write(str(line))
             f.write('\n')
