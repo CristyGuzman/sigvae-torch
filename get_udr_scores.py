@@ -24,7 +24,7 @@ def parse_cmd():
 def get_model(model_dir, config):
     model = DeepVGAE(config).to(C.DEVICE)
     model_dir = os.path.join(model_dir, 'model.pth')
-    loaded_dict = torch.load(model_dir)
+    loaded_dict = torch.load(model_dir, map_location=C.DEVICE)
     model.load_state_dict(loaded_dict['model_state_dict'])
     return model
 
