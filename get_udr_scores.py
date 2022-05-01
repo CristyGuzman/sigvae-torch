@@ -68,7 +68,7 @@ def get_kl_and_embedding_per_graph(model, data):
     separate_mus = split_embeddings_from_batch(mu, batch)
     separate_logstds = split_embeddings_from_batch(logstd, batch) # list of len num of graphs, each elem (num_nodes, num_latent_dims)
     #torch.mean(1 + 2 * logstd - mu ** 2 - logstd.exp() ** 2, dim=0).shape
-    kl_per_dim = lambda mu, log: 1 + 2 * log - mu ** 2 - np.exp(log) ** 2
+    kl_per_dim = lambda mu, log: -0.5 * (1 + 2 * log - mu ** 2 - np.exp(log) ** 2)
     kls_per_graph = []
     for mus, logs in zip(separate_mus, separate_logstds):
         all_kls = kl_per_dim(mus, logs)  # num_nodes, num_latent_dims
