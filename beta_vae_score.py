@@ -58,7 +58,7 @@ def sample_from_files(files_dir, batch_size):
     return graph_factor_list
 
 
-def get_training_sample(model_dir_list, batch_size, files_dir, transform):
+def get_training_sample(model_dir, batch_size, files_dir, transform):
 
     index = random.randint(0, 1) #2 generative factors for ws graphs
     graph_factor_list_1 = sample_from_files(files_dir=files_dir, batch_size=batch_size)
@@ -72,8 +72,8 @@ def get_training_sample(model_dir_list, batch_size, files_dir, transform):
     loader2 = DataLoader(transform(observations2), batch_size=batch_size, shuffle=True)
     data1 = next(iter(loader1))
     data2 = next(iter(loader2))
-    configs_list = get_configs_list(model_dir_list, data1.num_features)
-    model = get_representation_functions(model_dir_list, configs_list)
+    configs_list = get_configs_list(model_dir, data1.num_features)
+    model = get_representation_functions(model_dir, configs_list)
     model.eval()
     _, graph_embeddings1 = get_kl_and_embedding_per_graph(model, data1)
     _, graph_embeddings2 = get_kl_and_embedding_per_graph(model, data2)
@@ -86,7 +86,7 @@ def get_training_batch(num_points, batch_size, files_dir, model_dir, transform):
     points = None  # Dimensionality depends on the representation function.
     labels = np.zeros(num_points, dtype=np.int64)
     for i in range(num_points):
-        labels[i], feature_vector = get_training_sample(model_dir_list=model_dir, batch_size=batch_size, files_dir=files_dir, transform=transform)
+        labels[i], feature_vector = get_training_sample(model_dir=model_dir, batch_size=batch_size, files_dir=files_dir, transform=transform)
         if points is None:
             points = np.zeros((num_points, feature_vector.shape[0]))
         points[i, :] = feature_vector
