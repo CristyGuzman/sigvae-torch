@@ -73,8 +73,9 @@ def get_training_sample(model_dir, batch_size, files_dir, transform):
     data1 = next(iter(loader1))
     data2 = next(iter(loader2))
     configs_list = get_configs_list([model_dir], data1.num_features)
-    model = get_representation_functions([model_dir], configs_list)
-    model.eval()
+    models = get_representation_functions([model_dir], configs_list)
+    model = models[0]
+    model.eval() #we only have one model in list
     _, graph_embeddings1 = get_kl_and_embedding_per_graph(model, data1)
     _, graph_embeddings2 = get_kl_and_embedding_per_graph(model, data2)
     graph_embeddings1 = np.array(graph_embeddings1)
