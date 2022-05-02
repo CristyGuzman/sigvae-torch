@@ -18,6 +18,7 @@ def parse_cmd():
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--data_dir', type=str, default='/home/csolis/data/pyg_datasets')
     parser.add_argument('--save_dir', type=str)
+    parser.add_argument('--tag', type=str)
     args = parser.parse_args()
     return args
 
@@ -163,7 +164,7 @@ if __name__ == '__main__':
     #                     include_raw_correlations=True,
     #                     kl_filter_threshold=0.01)
     udrs = compute_udr(model_dir_list, train_data)
-    with open(os.path.join(args.save_dir, f'udrs_{args.batch_size}.txt'), 'w') as f:
+    with open(os.path.join(args.save_dir, f'udrs_{args.batch_size}_{args.tag}.txt'), 'w') as f:
         for line in udrs['model_scores']:
             f.write(str(line))
             f.write('\n')
