@@ -7,9 +7,12 @@ import random
 import json
 from data import json_to_sparse_matrix, create_data_object
 from torch_geometric.data import Batch, DataLoader
-from get_udr_scores import get_kl_and_embedding_per_graph
+import torch_geometric.transforms as T
+from get_udr_scores import get_kl_and_embedding_per_graph, get_model, get_configs_list, get_representation_functions
+from configuration import CONSTANTS as C
 from sklearn import linear_model
 import logging
+import argparse
 
 def sample_factors(batch_size):
     return [(random.randint(2, 10), random.uniform(0, 1)) for _ in range(batch_size)]
@@ -55,8 +58,8 @@ def sample_from_files(files_dir, batch_size):
     return graph_factor_list
 
 
-def get_training_sample(batch_size, files_dir, model):
-    model.eval()
+def get_training_sample(model_dir_list, batch_size, files_dir, transform):
+
     index = random.randint(0, 1) #2 generative factors for ws graphs
     graph_factor_list_1 = sample_from_files(files_dir=files_dir, batch_size=batch_size)
     graph_factor_list_2 = sample_from_files(files_dir=files_dir, batch_size=batch_size)
@@ -65,10 +68,13 @@ def get_training_sample(batch_size, files_dir, model):
     print(factors1, factors2)
     observations1 = [i[0] for i in graph_factor_list_1]
     observations2 = [i[0] for i in graph_factor_list_2]
-    loader1 = DataLoader(observations1, batch_size=batch_size)
-    loader2 = DataLoader(observations2, batch_size=batch_size)
+    loader1 = DataLoader(transform(observations1), batch_size=batch_size, shuffle=True)
+    loader2 = DataLoader(transform(observations2), batch_size=batch_size, shuffle=True)
     data1 = next(iter(loader1))
     data2 = next(iter(loader2))
+    configs_list = get_configs_list(model_dir_list, data1.num_features)
+    model = get_representation_functions(model_dir_list, configs_list)
+    model.eval()
     _, graph_embeddings1 = get_kl_and_embedding_per_graph(model, data1)
     _, graph_embeddings2 = get_kl_and_embedding_per_graph(model, data2)
     graph_embeddings1 = np.array(graph_embeddings1)
@@ -76,22 +82,23 @@ def get_training_sample(batch_size, files_dir, model):
     feature_vector = np.mean(np.abs(graph_embeddings1 - graph_embeddings2), axis=0)
     return index, feature_vector
 
-def get_training_batch(num_points, batch_size, files_dir, model):
+def get_training_batch(num_points, batch_size, files_dir, model_dir, transform):
     points = None  # Dimensionality depends on the representation function.
     labels = np.zeros(num_points, dtype=np.int64)
     for i in range(num_points):
-        labels[i], feature_vector = get_training_sample(batch_size=batch_size, files_dir=files_dir, model=model)
+        labels[i], feature_vector = get_training_sample(model_dir_list=model_dir, batch_size=batch_size, files_dir=files_dir, transform=transform)
         if points is None:
             points = np.zeros((num_points, feature_vector.shape[0]))
         points[i, :] = feature_vector
     return points, labels
 
-def compute_beta_vae_score(files_dir, model, batch_size, num_points, random_state):
+def compute_beta_vae_score(files_dir, model_dir, batch_size, num_points, transform, random_state):
 
     train_points, train_labels = get_training_batch(num_points=num_points,
                                                     batch_size=batch_size,
                                                     files_dir=files_dir,
-                                                    model=model)
+                                                    model_dir=model_dir,
+                                                    transform=transform)
 
     model = linear_model.LogisticRegression(random_state=random_state)
     model.fit(train_points, train_labels)
@@ -103,7 +110,8 @@ def compute_beta_vae_score(files_dir, model, batch_size, num_points, random_stat
     test_points, test_labels = get_training_batch(num_points=num_points,
                                                   batch_size=batch_size,
                                                   files_dir=files_dir,
-                                                  model=model)
+                                                  model_dir=model_dir,
+                                                  transform=transform)
     logging.info("Evaluate test set accuracy.")
     test_accuracy = np.mean(model.predict(test_points) == test_labels)
     logging.info("Test set accuracy: %.2g", test_accuracy)
@@ -111,3 +119,41 @@ def compute_beta_vae_score(files_dir, model, batch_size, num_points, random_stat
     scores_dict["train_accuracy"] = train_accuracy
     scores_dict["eval_accuracy"] = test_accuracy
     return scores_dict
+
+
+
+def parse_cmd():
+    parser = argparse.ArgumentParser()
+    #General
+    parser.add_argument('--model_dir', nargs="+", help='list of model directories')
+    parser.add_argument('--files_dir', type=str)
+    parser.add_argument('--num_points', type=int, default=50)
+    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--data_dir', type=str, default='/home/csolis/data/pyg_datasets')
+    parser.add_argument('--save_dir', type=str)
+    parser.add_argument('--tag', type=str)
+    parser.add_argument('--seed', type=int, default=42)
+    args = parser.parse_args()
+    return args
+
+if __name__ == '__main__':
+    args = parse_cmd()
+    transform = T.Compose([
+        T.NormalizeFeatures(),
+        T.ToDevice(C.DEVICE),
+        T.RandomLinkSplit(num_val=0.05, num_test=0.1, is_undirected=True,
+                          split_labels=True, add_negative_train_samples=True),
+    ])
+    model_dir_list = args.model_dir
+    num_models = len(args.model_dir)
+    for i, model_dir in enumerate(model_dir_list):
+        random_state = np.random.RandomState(args.seed)
+        scores_dict = compute_beta_vae_score(files_dir=args.files_dir,
+                               model_dir=model_dir,
+                               batch_size=args.batch_size,
+                               num_points=args.num_points,
+                               transform=transform,
+                               random_state=random_state)
+
+        with open(os.path.join(args.save_dir, f'beta_vae_{i}'), 'w') as f:
+            json.dump(scores_dict, f)
