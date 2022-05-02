@@ -141,8 +141,7 @@ if __name__ == '__main__':
     transform = T.Compose([
         T.NormalizeFeatures(),
         T.ToDevice(C.DEVICE),
-        T.RandomLinkSplit(num_val=0.05, num_test=0.1, is_undirected=True,
-                          split_labels=True, add_negative_train_samples=True),
+
     ])
     model_dir_list = args.model_dir
     num_models = len(args.model_dir)
