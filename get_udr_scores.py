@@ -127,11 +127,12 @@ def compute_udr(model_dir_list, data):
     return scores_dict
 
 
-def get_configs_list(model_dir, data_input_size):
+def get_configs_list(model_dir_list, data_input_size):
     configs_list = []
-    with open(os.path.join(model_dir, 'config.json'), 'r') as f:
-        config = json.load(f)
-        configs_list.append(Configuration(config))
+    for model_dir in model_dir_list:
+        with open(os.path.join(model_dir, 'config.json'), 'r') as f:
+            config = json.load(f)
+            configs_list.append(Configuration(config))
     return configs_list
 
 if __name__ == '__main__':
