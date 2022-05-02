@@ -6,7 +6,7 @@ from tqdm import tqdm
 import random
 import json
 from data import json_to_sparse_matrix, create_data_object
-from torch_geometric.data import Batch, DataLoader
+from torch_geometric.loader import DataLoader
 import torch_geometric.transforms as T
 from get_udr_scores import get_kl_and_embedding_per_graph, get_model, get_configs_list, get_representation_functions
 from configuration import CONSTANTS as C
