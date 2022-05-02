@@ -47,7 +47,7 @@ def sample_from_files(files_dir, batch_size):
     filtered_files = filtered_files[:batch_size] #to keep batch_size fixed
     graph_factor_list = []
     for file, factor in tqdm(filtered_files):
-        with open(file, 'r') as f:
+        with open(os.path.join(files_dir, file), 'r') as f:
             json_dict = json.loads(json.load(f))
             keys = list(json_dict.keys())
             key = random.randrange(len(keys)) #choose one graph from file
