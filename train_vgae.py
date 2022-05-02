@@ -53,7 +53,7 @@ def main(config):
     data_list = json_to_sparse_matrix(file_list)
     data_list_transformed = [transform(data) for data in data_list]
     data_list_split = [random_link_split(data) for data in data_list_transformed]
-    loader = DataLoader(data_list_split, batch_size=config.bs_train)
+    loader = DataLoader(data_list_split, batch_size=config.bs_train, shuffle=True)
     test_loader = DataLoader(data_list_transformed, batch_size=config.bs_eval)
     if config.input_size is None:
         config.input_size = data_list[0].num_features
