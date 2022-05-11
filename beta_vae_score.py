@@ -14,12 +14,24 @@ from sklearn import linear_model
 import logging
 import argparse
 
-def sample_factors(batch_size):
-    return [(random.randint(2, 10), random.uniform(0, 1)) for _ in range(batch_size)]
+def sample_factors(batch_size, fixed_param=None):
+    """
+    function taht returns a list of tuples, where first element is a number between 2 and 10 corresponding to the k param,
+    second element in tuple is p. List of length batch_size.
+    """
+    if fixed_param is None:
+        return [(random.randint(2, 10), random.uniform(0, 1)) for _ in range(batch_size)]
+    elif fixed_param == 0:
+        return [random.uniform(0, 1) for _ in range(batch_size)]
+    else:
+        if fixed_param != 1:
+            raise ValueError("chosen param index must be either 0 or 1")
+        return [random.randint(2, 10) for _ in range(batch_size)]
 
 
 
-def sample_from_files(files_dir, batch_size):
+
+def sample_from_files(files_dir, batch_size, factors):
     #1. sample batch_size graphs. since files contain 10 graphs need to randomly take 1 per file, so do batch_size json loads
     # append batch_size graphs and convert list to batch
     """
@@ -28,22 +40,20 @@ def sample_from_files(files_dir, batch_size):
     0. Choose generative factor g (can be either k or p)
     1. Sample two pairs of (k,p) factors
     2. for each pair, sample batch_size graphs from filtered files that contain such generative factors
-    3. append graphs to list and convert to batch object
-    Returns: tuple with g value (either 0 or 1) and Batch object with batch_size graphs
     """
     ##
-    factors = sample_factors(batch_size=batch_size)
+    #factors = sample_factors(batch_size=batch_size) #list with batch_size elements
     filenames = os.listdir(files_dir)
     print(f'chosen params: k={[i[0] for i in factors]}\n p={[i[1] for i in factors]}')
     filtered_files = []
-    for factor in factors:
+    for factor in factors: #loops batch_size numebr of times
         for file in tqdm(filenames):
             file_no_ext = re.sub('_.json', '', file)
             list_params = file_no_ext.split('__')
             p_file = round(float(re.sub('_', '.', list_params[-1])), 1)
             k = int(list_params[-2])
             if (p_file == round(factor[1])) & (k == factor[0]):
-                filtered_files.append((file, factor))
+                filtered_files.append((file, factor)) #list of tuples, first elem a file, second element another tuple with the params
     filtered_files = filtered_files[:batch_size] #to keep batch_size fixed
     graph_factor_list = []
     for file, factor in tqdm(filtered_files):
@@ -57,14 +67,34 @@ def sample_from_files(files_dir, batch_size):
 
     return graph_factor_list
 
+def create_pairs(batch_size, index):
+
+    factors1 = sample_factors(batch_size=batch_size) #list of batch_size pairs of factors
+    fixed_factors2 = [i[index] for i in factors1]
+
+    variable_factors2 = sample_factors(batch_size=batch_size, fixed_param=index)
+    if index == 0:
+        factors2 = [(k, p) for k,p in zip(fixed_factors2, variable_factors2)]
+    else:
+        factors2 = [(k, p) for k,p in zip(variable_factors2, fixed_factors2)]
+    # all elements from the list will have the same value for the fixed generative factor
+    return (factors1, factors2)
 
 def get_training_sample(model_dir, batch_size, files_dir, transform):
-
+    """
+    for each batch, generate a
+    create two lists of length batch_size
+     3. append graphs to list and convert to batch object
+    Returns: tuple with g value (either 0 or 1) and Batch object with batch_size graphs
+    """
     index = random.randint(0, 1) #2 generative factors for ws graphs
-    graph_factor_list_1 = sample_from_files(files_dir=files_dir, batch_size=batch_size)
-    graph_factor_list_2 = sample_from_files(files_dir=files_dir, batch_size=batch_size)
+    factors1, factors2 = create_pairs(batch_size=batch_size, index=index)
+    graph_factor_list_1 = sample_from_files(files_dir=files_dir, batch_size=batch_size, factors=factors1)
+    graph_factor_list_2 = sample_from_files(files_dir=files_dir, batch_size=batch_size, factors=factors2)
     factors1 = [i[1][index] for i in graph_factor_list_1]
     factors2 = [i[1][index] for i in graph_factor_list_2]
+    if factors1 != factors2:
+        raise ValueError("Generative factors must be the same")
     print(factors1, factors2)
     observations1 = [i[0] for i in graph_factor_list_1]
     observations2 = [i[0] for i in graph_factor_list_2]
