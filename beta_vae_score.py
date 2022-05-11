@@ -44,7 +44,7 @@ def sample_from_files(files_dir, batch_size, factors):
     ##
     #factors = sample_factors(batch_size=batch_size) #list with batch_size elements
     filenames = os.listdir(files_dir)
-    print(f'chosen params: k={[i[0] for i in factors]}\n p={[i[1] for i in factors]}')
+    #print(f'chosen params: k={[i[0] for i in factors]}\n p={[i[1] for i in factors]}')
     filtered_files = []
     for factor in factors: #loops batch_size numebr of times
         for file in tqdm(filenames):
@@ -95,7 +95,6 @@ def get_training_sample(model_dir, batch_size, files_dir, transform):
     factors2 = [i[1][index] for i in graph_factor_list_2]
     if factors1 != factors2:
         raise ValueError("Generative factors must be the same")
-    print(factors1, factors2)
     observations1 = [i[0] for i in graph_factor_list_1]
     observations2 = [i[0] for i in graph_factor_list_2]
     loader1 = DataLoader(transform(observations1), batch_size=batch_size, shuffle=True)
