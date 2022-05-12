@@ -53,7 +53,7 @@ def sample_from_files(files_dir, batch_size, factors):
             list_params = file_no_ext.split('__')
             p_file = round(float(re.sub('_', '.', list_params[-1])), 1)
             k = int(list_params[-2])
-            if (p_file == round(factor[1], 1)) & (k == factor[0]) & flag == 0:
+            if (p_file == round(factor[1], 1)) & (k == factor[0]) & (flag == 0):
                 flag = 1
                 print(file, (p_file, round(factor[1], 1)), (k, factor[0]))
                 filtered_files.append((file, factor)) #list of tuples, first elem a file, second element another tuple with the params
