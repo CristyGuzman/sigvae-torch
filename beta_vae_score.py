@@ -181,6 +181,7 @@ if __name__ == '__main__':
     model_dir_list = args.model_dir
     num_models = len(args.model_dir)
     for i, model_dir in enumerate(model_dir_list):
+        print(f'Model {i}')
         random_state = np.random.RandomState(args.seed)
         scores_dict = compute_beta_vae_score(files_dir=args.files_dir,
                                model_dir=model_dir,
