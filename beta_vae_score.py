@@ -16,11 +16,12 @@ import argparse
 
 def sample_factors(batch_size, fixed_param=None):
     """
-    function taht returns a list of tuples, where first element is a number between 2 and 10 corresponding to the k param,
+    function that returns a list of tuples, where first element is a number between 2 and 10 corresponding to the k param,
     second element in tuple is p. List of length batch_size.
     """
     if fixed_param is None:
-        return [(random.randint(2, 10), random.uniform(0, 1)) for _ in range(batch_size)]
+        ps = np.linspace(0, 1, 30)
+        return [(random.randint(2, 10), random.choice(ps)) for _ in range(batch_size)]
     elif fixed_param == 0:
         return [random.uniform(0, 1) for _ in range(batch_size)]
     else:
