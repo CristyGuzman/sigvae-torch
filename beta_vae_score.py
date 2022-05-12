@@ -89,10 +89,12 @@ def get_training_sample(model_dir, batch_size, files_dir, transform):
     """
     index = random.randint(0, 1) #2 generative factors for ws graphs
     factors1, factors2 = create_pairs(batch_size=batch_size, index=index)
+    print(factors1, factors2)
     graph_factor_list_1 = sample_from_files(files_dir=files_dir, batch_size=batch_size, factors=factors1)
     graph_factor_list_2 = sample_from_files(files_dir=files_dir, batch_size=batch_size, factors=factors2)
     factors1 = [i[1][index] for i in graph_factor_list_1]
     factors2 = [i[1][index] for i in graph_factor_list_2]
+    print(factors1, factors2)
     if factors1 != factors2:
         raise ValueError("Generative factors must be the same")
     observations1 = [i[0] for i in graph_factor_list_1]
