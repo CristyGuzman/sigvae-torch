@@ -47,14 +47,18 @@ def sample_from_files(files_dir, batch_size, factors):
     #print(f'chosen params: k={[i[0] for i in factors]}\n p={[i[1] for i in factors]}')
     filtered_files = []
     for factor in factors: #loops batch_size numebr of times
+        flag = 0
         for file in tqdm(filenames):
             file_no_ext = re.sub('_.json', '', file)
             list_params = file_no_ext.split('__')
             p_file = round(float(re.sub('_', '.', list_params[-1])), 1)
             k = int(list_params[-2])
-            if (p_file == round(factor[1], 1)) & (k == factor[0]):
+            if (p_file == round(factor[1], 1)) & (k == factor[0]) & flag == 0:
+                flag = 1
                 print(file, (p_file, round(factor[1], 1)), (k, factor[0]))
                 filtered_files.append((file, factor)) #list of tuples, first elem a file, second element another tuple with the params
+            else:
+                continue
     #filtered_files = filtered_files[:batch_size] #to keep batch_size fixed
     graph_factor_list = []
     for file, factor in tqdm(filtered_files):
