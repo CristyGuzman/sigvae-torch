@@ -48,12 +48,12 @@ def sample_from_files(files_dir, batch_size, factors):
     filtered_files = []
     for factor in factors: #loops batch_size numebr of times
         for file in tqdm(filenames):
-            print(file)
             file_no_ext = re.sub('_.json', '', file)
             list_params = file_no_ext.split('__')
             p_file = round(float(re.sub('_', '.', list_params[-1])), 1)
             k = int(list_params[-2])
             if (p_file == round(factor[1])) & (k == factor[0]):
+                print(file, (p_file, factor[1]), (k, factor[0]))
                 filtered_files.append((file, factor)) #list of tuples, first elem a file, second element another tuple with the params
     #filtered_files = filtered_files[:batch_size] #to keep batch_size fixed
     graph_factor_list = []
@@ -75,9 +75,9 @@ def create_pairs(batch_size, index):
 
     variable_factors2 = sample_factors(batch_size=batch_size, fixed_param=index)
     if index == 0:
-        factors2 = [(k, p) for k,p in zip(fixed_factors2, variable_factors2)]
+        factors2 = [(k, p) for k, p in zip(fixed_factors2, variable_factors2)]
     else:
-        factors2 = [(k, p) for k,p in zip(variable_factors2, fixed_factors2)]
+        factors2 = [(k, p) for k, p in zip(variable_factors2, fixed_factors2)]
     # all elements from the list will have the same value for the fixed generative factor
     return (factors1, factors2)
 
