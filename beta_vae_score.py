@@ -54,7 +54,7 @@ def sample_from_files(files_dir, batch_size, factors):
             k = int(list_params[-2])
             if (p_file == round(factor[1])) & (k == factor[0]):
                 filtered_files.append((file, factor)) #list of tuples, first elem a file, second element another tuple with the params
-    filtered_files = filtered_files[:batch_size] #to keep batch_size fixed
+    #filtered_files = filtered_files[:batch_size] #to keep batch_size fixed
     graph_factor_list = []
     for file, factor in tqdm(filtered_files):
         with open(os.path.join(files_dir, file), 'r') as f:
@@ -90,8 +90,8 @@ def get_training_sample(model_dir, batch_size, files_dir, transform):
     index = random.randint(0, 1) #2 generative factors for ws graphs
     factors1, factors2 = create_pairs(batch_size=batch_size, index=index)
     print(factors1, factors2)
-    graph_factor_list_1 = sample_from_files(files_dir=files_dir, batch_size=batch_size, factors=factors1)
-    graph_factor_list_2 = sample_from_files(files_dir=files_dir, batch_size=batch_size, factors=factors2)
+    graph_factor_list_1 = sample_from_files(files_dir=files_dir, batch_size=batch_size, factors=factors1)[:batch_size]
+    graph_factor_list_2 = sample_from_files(files_dir=files_dir, batch_size=batch_size, factors=factors2)[:batch_size]
     factors1 = [i[1][index] for i in graph_factor_list_1]
     factors2 = [i[1][index] for i in graph_factor_list_2]
     print(factors1, factors2)
