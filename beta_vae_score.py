@@ -43,11 +43,12 @@ def sample_from_files(files_dir, batch_size, factors):
     """
     ##
     #factors = sample_factors(batch_size=batch_size) #list with batch_size elements
-    filenames = os.listdir(files_dir)
+    filenames = sorted(os.listdir(files_dir))
     #print(f'chosen params: k={[i[0] for i in factors]}\n p={[i[1] for i in factors]}')
     filtered_files = []
     for factor in factors: #loops batch_size numebr of times
         for file in tqdm(filenames):
+            print(file)
             file_no_ext = re.sub('_.json', '', file)
             list_params = file_no_ext.split('__')
             p_file = round(float(re.sub('_', '.', list_params[-1])), 1)
@@ -90,7 +91,9 @@ def get_training_sample(model_dir, batch_size, files_dir, transform):
     index = random.randint(0, 1) #2 generative factors for ws graphs
     factors1, factors2 = create_pairs(batch_size=batch_size, index=index)
     print(factors1, factors2)
+    print('start sampling for first list of graphs')
     graph_factor_list_1 = sample_from_files(files_dir=files_dir, batch_size=batch_size, factors=factors1)[:batch_size]
+    print('start sampling for second list')
     graph_factor_list_2 = sample_from_files(files_dir=files_dir, batch_size=batch_size, factors=factors2)[:batch_size]
     factors1 = [i[1][index] for i in graph_factor_list_1]
     factors2 = [i[1][index] for i in graph_factor_list_2]
