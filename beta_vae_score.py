@@ -184,5 +184,8 @@ if __name__ == '__main__':
                                transform=transform,
                                random_state=random_state)
 
-        with open(os.path.join(args.save_dir, f'beta_vae_{i}_{args.tag}.json'), 'w') as f:
+        dirname = args.save_dir + args.tag
+        if not os.path.exists(dirname):
+            os.mkdir(dirname)
+        with open(os.path.join(dirname, f'beta_vae_{i}.json'), 'w') as f:
             json.dump(scores_dict, f)
