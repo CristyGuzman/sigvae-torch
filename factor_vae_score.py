@@ -46,6 +46,8 @@ def parse_cmd():
     parser.add_argument('--batch_size', type=int, default=32, help='Number of samples for creating one data for computing the score')
     parser.add_argument('--files_dir', type=str)
     parser.add_argument('--model_dir', type=str)
+    args = parser.parse_args()
+    return args
 
 
 if __name__ == "__main__":
