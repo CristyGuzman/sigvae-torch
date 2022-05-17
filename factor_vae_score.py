@@ -34,8 +34,18 @@ def get_training_sample(model_dir, files_dir, batch_size, transform):
     models = get_representation_functions([model_dir], configs_list)
     model = models[0]
     model.eval()  # we only have one model in list
-    _, graph_embeddings = get_kl_and_embedding_per_graph(model, data)
+    _, graph_embeddings = get_kl_and_embedding_per_graph(model, data)  #batch_size, latent dims
     # 4. Normalize the data dividing by its standard deviation over the full data
+    graph_embeddings = np.array(graph_embeddings)
+    stds = np.std(graph_embeddings, axis=0)
+    normalized_graph_embeddings = graph_embeddings/stds
+    # 5. Take the variance in each dimension and choose argmin
+    vars = np.var(normalized_graph_embeddings, axis=0)
+    d = np.argmin(vars)
+    return d, index
+
+def generate_training_batch(num_points):
+    samples= np.zeros((num_points,2), dtype=np.int64)
 
 
 def main(args):
