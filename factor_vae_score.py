@@ -86,12 +86,12 @@ def get_training_sample(model_dir, files_dir, batch_size, transform, factors, gr
         d = np.argmin(vars[active_dims]/global_variances[active_dims])
         return d, index
 
-def generate_training_batch(model_dir, files_dir, batch_size, transform, num_points, latent_dims_vars, num_factors=2):
+def generate_training_batch(model_dir, files_dir, batch_size, transform, num_points, latent_dims_vars, num_factors=2, global_variances=None, active_dims=None):
     votes = np.zeros((num_factors, latent_dims_vars.shape[0]),
                      dtype=np.int64)
     for _ in range(num_points):
         argmin, factor_index = get_training_sample(model_dir=model_dir, files_dir=files_dir, batch_size=batch_size,
-                                                   factors=1, transform=transform)
+                                                   factors=1, transform=transform, global_variances=global_variances, active_dims=active_dims)
         votes[factor_index, argmin] += 1
     return votes
 
@@ -165,7 +165,9 @@ if __name__ == "__main__":
                                              batch_size=args.batch_size,
                                              transform=transform,
                                              num_points=args.num_points,
-                                             latent_dims_vars=global_variances)
+                                             latent_dims_vars=global_variances,
+                                             global_variances=global_variances,
+                                             active_dims=active_dims)
 
     compute_factor_vae(training_votes=training_votes, global_variances=global_variances, active_dims=active_dims)
 
