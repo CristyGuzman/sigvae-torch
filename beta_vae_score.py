@@ -31,8 +31,7 @@ def sample_factors(batch_size, fixed_param=None):
 
 
 
-
-def sample_from_files(files_dir, batch_size, factors):
+def sample_from_files(files_dir, batch_size, factors=None, graphs_per_file=None):
     #1. sample batch_size graphs. since files contain 10 graphs need to randomly take 1 per file, so do batch_size json loads
     # append batch_size graphs and convert list to batch
     """
@@ -43,33 +42,56 @@ def sample_from_files(files_dir, batch_size, factors):
     2. for each pair, sample batch_size graphs from filtered files that contain such generative factors
     """
     ##
-    #factors = sample_factors(batch_size=batch_size) #list with batch_size elements
-    filenames = sorted(os.listdir(files_dir))
-    #print(f'chosen params: k={[i[0] for i in factors]}\n p={[i[1] for i in factors]}')
     filtered_files = []
-    for factor in factors: #loops batch_size numebr of times
-        flag = 0
-        for file in tqdm(filenames):
+    if factors is not None:
+        #factors = sample_factors(batch_size=batch_size) #list with batch_size elements
+        filenames = sorted(os.listdir(files_dir))
+        #print(f'chosen params: k={[i[0] for i in factors]}\n p={[i[1] for i in factors]}')
+        #filtered_files = []
+        for factor in factors: #loops batch_size numebr of times
+            flag = 0
+            for file in tqdm(filenames):
+                file_no_ext = re.sub('_.json', '', file)
+                list_params = file_no_ext.split('__')
+                p_file = round(float(re.sub('_', '.', list_params[-1])), 1)
+                k = int(list_params[-2])
+                if (p_file == round(factor[1], 1)) & (k == factor[0]) & (flag == 0):
+                    flag = 1
+                    print(file, (p_file, round(factor[1], 1)), (k, factor[0]))
+                    filtered_files.append((file, factor)) #list of tuples, first elem a file, second element another tuple with the params
+                else:
+                    continue
+    else:
+        files = os.listdir(files_dir)
+        print(f'number of filtered files before sampling: {len(files)}\n')
+        assert len(files) >= batch_size, "List must be bigger than sample number"
+        print(f'Choosing {batch_size} samples')
+        files = random.sample(files, batch_size)
+        for file in files:
             file_no_ext = re.sub('_.json', '', file)
             list_params = file_no_ext.split('__')
-            p_file = round(float(re.sub('_', '.', list_params[-1])), 1)
+            p = round(float(re.sub('_', '.', list_params[-1])), 1)
             k = int(list_params[-2])
-            if (p_file == round(factor[1], 1)) & (k == factor[0]) & (flag == 0):
-                flag = 1
-                print(file, (p_file, round(factor[1], 1)), (k, factor[0]))
-                filtered_files.append((file, factor)) #list of tuples, first elem a file, second element another tuple with the params
-            else:
-                continue
+            factors = (k, p)
+            filtered_files.append((file, factors))
     #filtered_files = filtered_files[:batch_size] #to keep batch_size fixed
     graph_factor_list = []
     for file, factor in tqdm(filtered_files):
         with open(os.path.join(files_dir, file), 'r') as f:
             json_dict = json.loads(json.load(f))
             keys = list(json_dict.keys())
-            key = random.randrange(len(keys)) #choose one graph from file
-            json_dict_val = json_dict[str(key)]
-            data = create_data_object(json_dict_val)
-            graph_factor_list.append((data, factor))
+            if graphs_per_file is not None:
+                keys = [random.randrange(len(keys)) for _ in range(graphs_per_file)]
+                for key in range(len(keys)):
+                    key = random.randrange(len(keys))
+                    json_dict_val = json_dict[str(key)]
+                    data = create_data_object(json_dict_val)
+                    graph_factor_list.append((data, factor))
+            else:
+                key = random.randrange(len(keys)) #choose one graph from file
+                json_dict_val = json_dict[str(key)]
+                data = create_data_object(json_dict_val)
+                graph_factor_list.append((data, factor))
 
     return graph_factor_list
 
