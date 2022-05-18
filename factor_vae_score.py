@@ -56,12 +56,21 @@ def get_training_sample(model_dir, files_dir, batch_size, transform, factors, gr
     """
     Fixed batch size uses entire dataset FIXME
     """
-    index, data, models = get_data_and_models(model_dir=model_dir,
-                                              files_dir=files_dir,
-                                              batch_size=batch_size,
-                                              transform=transform,
-                                              factors=factors,
-                                              graphs_per_file=graphs_per_file)
+    if factors is not None:
+        index, data, models = get_data_and_models(model_dir=model_dir,
+                                                  files_dir=files_dir,
+                                                  batch_size=batch_size,
+                                                  transform=transform,
+                                                  factors=factors,
+                                                  graphs_per_file=graphs_per_file)
+    else:
+        data, models = get_data_and_models(model_dir=model_dir,
+                                           files_dir=files_dir,
+                                           batch_size=batch_size,
+                                           transform=transform,
+                                           factors=factors,
+                                           graphs_per_file=graphs_per_file)
+
     model = models[0]
     model.eval()  # we only have one model in list
     _, graph_embeddings = get_kl_and_embedding_per_graph(model, data)  #batch_size, latent dims
