@@ -80,8 +80,6 @@ def get_training_sample(model_dir, files_dir, batch_size, transform, factors, gr
     if factors is None:
         return vars
     else:
-        #active_dims = _prune_dims(vars)
-
         normalized_graph_embeddings = graph_embeddings
         # 5. Take the variance in each dimension and choose argmin
         vars = np.var(normalized_graph_embeddings, axis=0, ddof=1)
@@ -91,11 +89,9 @@ def get_training_sample(model_dir, files_dir, batch_size, transform, factors, gr
 def generate_training_batch(model_dir, files_dir, batch_size, transform, num_points, latent_dims_vars, num_factors=2):
     votes = np.zeros((num_factors, latent_dims_vars.shape[0]),
                      dtype=np.int64)
-    #samples = np.zeros((num_points, 2), dtype=np.int64) #stores dimension of minimum variance and original fixed factor
     for _ in range(num_points):
         argmin, factor_index = get_training_sample(model_dir=model_dir, files_dir=files_dir, batch_size=batch_size,
-                                                       transform=transform)
-        argmin, factor_index = get_training_sample(model_dir=model_dir, files_dir=files_dir, batch_size=batch_size, transform=transform)
+                                                   factors=1, transform=transform)
         votes[factor_index, argmin] += 1
     return votes
 
