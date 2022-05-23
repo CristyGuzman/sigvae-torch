@@ -26,7 +26,7 @@ class GCNModelSIGVAE(nn.Module):
         if ndist == 'Bernoulli':
             self.ndist = tdist.Bernoulli(torch.tensor([.5], device=self.device))
         elif ndist == 'Normal':
-            self.ndist == tdist.Normal(
+            self.ndist = tdist.Normal(
                     torch.tensor([0.], device=self.device),
                     torch.tensor([1.], device=self.device))
         elif ndist == 'Exponential':
