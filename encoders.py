@@ -3,6 +3,7 @@ from torch_geometric.nn import GAE, VGAE, GCNConv
 from torch_geometric.utils import train_test_split_edges
 from torch_geometric.nn import GINConv, global_add_pool, GATConv
 import torch.nn.functional as F
+import torch.distributions as tdist
 from torch.nn import BatchNorm1d, Linear, ReLU, Sequential
 from torch_geometric.nn.models.autoencoder import VGAE
 from torch_geometric.utils import (add_self_loops, negative_sampling,
@@ -119,6 +120,15 @@ class VGAE2(VGAE):
     def model_name(self):
         """A summary string of this model. Override this if desired."""
         return '{}-{}'.format(self.__class__.__name__, self.config.tag)
+    def encode(self, *args, **kwargs):
+        mu, sigma = self.encoder(*args, **kwargs)
+        emb_mu = mu[self.K:, :]
+        emb_logvar = sigma[self.K:, :]
+
+        # check tensor size compatibility
+        assert len(emb_mu.shape) == len(emb_logvar.shape), 'mu and logvar are not equi-dimension.'
+
+        z, eps = self.reparameterize(emb_mu, emb_logvar)
 
     def reconstruction_loss(self, z, pos_edge_index, neg_edge_index, all_edge_index):
         pos_loss = -torch.log(
@@ -143,3 +153,57 @@ class VGAE2(VGAE):
         y, pred = y.detach().cpu().numpy(), pred.detach().cpu().numpy()
         return y, pred
 
+class SIGVAE(torch.nn.Module):
+    def __init__(self, config):
+        super(SIGVAE, self).__init__()
+        ## Follow layer definition as in original SIGVAE implementation
+        self.config = config
+        self.in_channels = config.input_size
+        self.out_channels = config.output_size
+        self.e_channels = config.noise_size
+        self.hidden_dim = config.hidden_size
+        self.gcn_e = GCNConv(self.e_channels, self.hidden_dim)
+        self.gcn_1 = GCNConv(self.in_channels, self.hidden_dim)
+        self.gcn_mu = GCNConv(self.hidden_dim, self.out_channels)
+        self.gcn_sigma = GCNConv(self.hidden_dim, self.out_channels)
+        if config.ndist == 'Bernoulli':
+            self.ndist = tdist.Bernoulli(torch.tensor([.5]))
+        elif config.ndist == 'Normal':
+            self.ndist = tdist.Normal(torch.tensor([0.]), torch.tensor([1.]))
+        elif config.ndist == 'Exponential':
+            self.ndist = tdist.Exponential(torch.tensor([1.]))
+        self.K = config.K
+        self.J = config.copyJ
+
+        # parameters in network gc1 and gce are NOT identically distributed, so we need to reweight the output
+        # of gce() so that the effect of hiddenx + hiddene is equivalent to gc(x || e).
+        self.reweight = ((self.e_channels + self.hidden_dim) / (self.in_channels + self.hidden_dim)) ** (.5)
+
+    def reparameterize(self, mu, logvar):
+        std = torch.exp(logvar / 2.)
+        eps = torch.randn_like(std)
+        return eps.mul(std).add(mu), eps
+
+    def forward(self, x, edge_index):
+        hidden_x = self.gcn_1(x, edge_index).relu()
+        e = self.ndist.sample(torch.Size([self.K + self.J, x.shape[1], self.e_channels]))
+        e = torch.squeeze(e, -1)
+        e = e.mul(self.reweight)
+        hidden_e = self.gcn_e(e, edge_index)
+
+        hidden1 = hidden_x + hidden_e
+        mu = self.gcn_mu(hidden1, edge_index)
+        sigma = self.gcn_sigma(hidden1, edge_index)
+        emb_mu = mu[self.K:, :]
+        emb_logvar = sigma[self.K:, :]
+
+        # check tensor size compatibility
+        assert len(emb_mu.shape) == len(emb_logvar.shape), 'mu and logvar are not equi-dimension.'
+
+        z, eps = self.reparameterize(emb_mu, emb_logvar)
+
+        return mu, sigma, z, eps
+
+
+
+        #return self.conv2(x, edge_index)
