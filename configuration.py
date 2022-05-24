@@ -74,6 +74,7 @@ class Configuration(object):
         parser.add_argument('--kl', default=False, action='store_true')
 
         # model
+        parser.add_argument('--model', type=str, default='vgae')
         parser.add_argument('--encoder_type', type=str, default='gcn')
         parser.add_argument('--input_size', type=int)
         parser.add_argument('--hidden_size', type=int, default=32)
