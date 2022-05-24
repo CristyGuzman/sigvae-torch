@@ -21,6 +21,7 @@ from torch import nn
 import sys
 import numpy as np
 from metrics import Metrics
+from optimizer import loss_function
 
 #CONFIG_PATH = "./"
 def load_config(config_path):
@@ -44,16 +45,37 @@ def get_losses(model, z, data, kl=True):
         return loss, {'total_loss': float(loss), 'recon_loss': float(recon_loss)}
 
 
-def train(model, optimizer, data, kl=True):
+def train(epoch, model, optimizer, data, kl=True):
     model.train()
     optimizer.zero_grad()
     #z = model.encode(data.x, data.edge_index)
-    z = model.encode(data.x, data.pos_edge_label_index)
-    #recon_loss = model.recon_loss(z, data.pos_edge_label_index)
-    loss, losses = get_losses(model, z, data, kl)
-    #loss = losses['total_loss']
-    #kl_loss = model.kl_loss
-    #loss = recon_loss + (1 / train_data.num_nodes) * kl_loss
+    if model.__class__.__name__ == 'SIGVAE':
+        recovered, mu, logvar, z, z_scaled, eps, rk, snr = model(data.x, data.pos_edge_label_index)
+        loss_rec, loss_prior, loss_post = loss_function(
+            preds=recovered,
+            #labels=adj_label,
+            mu=mu,
+            logvar=logvar,
+            emb=z,
+            eps=eps,
+            n_nodes=1000,
+            #norm=norm,
+           # pos_weight=pos_weight
+        )
+
+        WU = np.min([epoch / 300., 1.])
+        #reg = (loss_post - loss_prior) * WU / (n_nodes ** 2)
+
+        loss_train = loss_rec #+ WU * reg
+        # loss_train = loss_rec
+        loss_train.backward()
+    else:
+        z = model.encode(data.x, data.pos_edge_label_index)
+        #recon_loss = model.recon_loss(z, data.pos_edge_label_index)
+        loss, losses = get_losses(model, z, data, kl)
+        #loss = losses['total_loss']
+        #kl_loss = model.kl_loss
+        #loss = recon_loss + (1 / train_data.num_nodes) * kl_loss
     loss.backward()
     nn.utils.clip_grad_norm_(model.parameters(), max_norm=1)
     optimizer.step()
@@ -176,7 +198,7 @@ def main(config):
         if config.cora:
             train_data, val_data, test_data = data
             start = time.time()
-            train_losses = train(model, optimizer, train_data, config.kl)
+            train_losses = train(epoch, model, optimizer, train_data, config.kl)
             elapsed = time.time() - start
             for k in train_losses:
                 prefix = '{}/{}'.format(k, 'train')
