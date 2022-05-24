@@ -181,6 +181,10 @@ class SIGVAE(torch.nn.Module):
         # of gce() so that the effect of hiddenx + hiddene is equivalent to gc(x || e).
         self.reweight = ((self.e_channels + self.hidden_dim) / (self.in_channels + self.hidden_dim)) ** (.5)
 
+    def model_name(self):
+        """A summary string of this model. Override this if desired."""
+        return '{}-{}'.format(self.__class__.__name__, self.config.tag)
+
     def reparameterize(self, mu, logvar):
         std = torch.exp(logvar / 2.)
         eps = torch.randn_like(std)
