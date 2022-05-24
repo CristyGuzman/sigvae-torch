@@ -24,6 +24,7 @@ from configuration import Configuration
 
 from data import MyOwnDataset, json_to_sparse_matrix
 from torch_geometric.loader import DataLoader
+from encoders import SIGVAE
 
 torch.manual_seed(12345)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -57,8 +58,11 @@ def main(config):
     test_loader = DataLoader(data_list_transformed, batch_size=config.bs_eval)
     if config.input_size is None:
         config.input_size = data_list[0].num_features
+    if config.model == 'vgae':
+        model = DeepVGAE(config).to(C.DEVICE)
+    elif config.model == 'sigvae':
+        model = SIGVAE(config=config).to(C.DEVICE)
 
-    model = DeepVGAE(config).to(C.DEVICE)
     optimizer = Adam(model.parameters(), lr=config.lr)
 
     experiment_id = int(time.time())
