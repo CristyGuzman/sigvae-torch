@@ -8,6 +8,7 @@ from torch.nn import BatchNorm1d, Linear, ReLU, Sequential
 from torch_geometric.nn.models.autoencoder import VGAE
 from torch_geometric.utils import (add_self_loops, negative_sampling,
                                    remove_self_loops)
+from model import GraphDecoder
 
 class GCNEncoder(torch.nn.Module):
     def __init__(self, in_channels, out_channels):
@@ -128,7 +129,7 @@ class VGAE2(VGAE):
         # check tensor size compatibility
         assert len(emb_mu.shape) == len(emb_logvar.shape), 'mu and logvar are not equi-dimension.'
 
-        z, eps = self.reparameterize(emb_mu, emb_logvar)
+        z, eps = self.reparametrize(emb_mu, emb_logvar)
 
     def reconstruction_loss(self, z, pos_edge_index, neg_edge_index, all_edge_index):
         pos_loss = -torch.log(
@@ -166,6 +167,7 @@ class SIGVAE(torch.nn.Module):
         self.gcn_1 = GCNConv(self.in_channels, self.hidden_dim)
         self.gcn_mu = GCNConv(self.hidden_dim, self.out_channels)
         self.gcn_sigma = GCNConv(self.hidden_dim, self.out_channels)
+        self.dc = GraphDecoder(self.out_channels, config.dropout, gdc='ip')
         if config.ndist == 'Bernoulli':
             self.ndist = tdist.Bernoulli(torch.tensor([.5]))
         elif config.ndist == 'Normal':
@@ -192,6 +194,9 @@ class SIGVAE(torch.nn.Module):
         hidden_e = self.gcn_e(e, edge_index)
 
         hidden1 = hidden_x + hidden_e
+        p_signal = hidden_x.pow(2.).mean()
+        p_noise = hidden_e.pow(2.).mean([-2, -1])
+        snr = (p_signal / p_noise)
         mu = self.gcn_mu(hidden1, edge_index)
         sigma = self.gcn_sigma(hidden1, edge_index)
         emb_mu = mu[self.K:, :]
@@ -202,7 +207,11 @@ class SIGVAE(torch.nn.Module):
 
         z, eps = self.reparameterize(emb_mu, emb_logvar)
 
-        return mu, sigma, z, eps
+        adj_, z_scaled, rk = self.dc(z)
+
+        return adj_, mu, sigma, z, z_scaled, eps, rk, snr
+
+        #return mu, sigma, z, eps
 
 
 
