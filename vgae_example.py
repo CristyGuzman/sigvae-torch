@@ -11,7 +11,7 @@ from tqdm import tqdm
 import torch_geometric.transforms as T
 from torch_geometric.loader import DataLoader
 #from torch_geometric.nn.models.autoencoder import VGAE
-from encoders import VariationalEncoder, VGAE2
+from encoders import VariationalEncoder, VGAE2, SIGVAE
 import yaml
 from torch.utils.tensorboard import SummaryWriter
 from configuration import CONSTANTS as C
@@ -135,7 +135,10 @@ def main(config):
     me = Metrics()
     if config.input_size is None:
         config.input_size = dataset.num_features
-    model = VGAE2(config=config, encoder=VariationalEncoder(config=config))
+    if config.model == 'vgae':
+        model = VGAE2(config=config, encoder=VariationalEncoder(config=config))
+    elif config.model == 'sigvae':
+        model = SIGVAE(config=config)
     model = model.to(C.DEVICE)
     experiment_id = int(time.time())
     experiment_name = model.model_name()
