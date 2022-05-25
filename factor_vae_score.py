@@ -146,6 +146,8 @@ def parse_cmd():
     parser.add_argument('--full_data_sample_size', type=int, help='number of data samples for calculating global variances per latent dimension')
     parser.add_argument('--graphs_per_file', type=int, help='number of graphs to retrieve from json files. Each file containes 10 graphs.')
     parser.add_argument('--num_points', type=int, help='number of points for computing score')
+    parser.add_argument('--save_dir', type=str)
+    parser.add_argument('--tag', type=str)
     args = parser.parse_args()
     return args
 
