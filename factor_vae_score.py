@@ -9,6 +9,8 @@ from get_udr_scores import get_kl_and_embedding_per_graph, get_configs_list, get
 import torch_geometric.transforms as T
 from configuration import CONSTANTS as C
 import logging
+import os
+import json
 
 # each data point is an input/output tuple, where the input is the index of
 # the dimension from latent representation with the least variance, and the output
@@ -170,8 +172,12 @@ if __name__ == "__main__":
                                              global_variances=global_variances,
                                              active_dims=active_dims)
 
-    compute_factor_vae(training_votes=training_votes, global_variances=global_variances, active_dims=active_dims)
-
+    scores_dict = compute_factor_vae(training_votes=training_votes, global_variances=global_variances, active_dims=active_dims)
+    dirname = args.save_dir + args.tag
+    if not os.path.exists(dirname):
+        os.mkdir(dirname)
+    with open(os.path.join(dirname, f'{args.tag}.json'), 'w') as f:
+        json.dump(scores_dict, f)
 
 
 
