@@ -120,6 +120,7 @@ def compute_factor_vae(training_votes, global_variances, active_dims):
         training_votes[classifier, other_index]) * 1. / np.sum(training_votes)
     scores_dict['train_accuracy'] = train_accuracy
     scores_dict["num_active_dims"] = len(active_dims)
+    return scores_dict
 
 
 #classifier = np.argmax(training_votes, axis=0)
